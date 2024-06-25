@@ -69,12 +69,12 @@ The application will run on modern web browsers (Chrome, Firefox, Safari, Edge) 
 - Users can record payments made to settle expenses.
 - Users can view outstanding balances with other users and groups.
 
-#### 3.1.5 Dashboard
+#### 3.1.5 Dashboard *(LATER)*
 
 - Users can see an overview of all expenses, balances, and group activities.
 - Users can view recent transactions and pending settlements.
 
-#### 3.1.6 Notifications
+#### 3.1.6 Notifications *(LATER)*
 
 - Users receive email and/or push notifications for new expenses, payments, and reminders.
 - Users can manage notification preferences.
@@ -89,34 +89,34 @@ The application will run on modern web browsers (Chrome, Firefox, Safari, Edge) 
 - Users can set up recurring expenses (e.g., monthly rent).
 - Users receive reminders for upcoming recurring expenses.
 
-#### 3.1.9 Expense Notes and Attachments
+#### 3.1.9 Expense Notes and Attachments *(LATER)*
 
 - Users can add notes to expenses for additional details.
 - Users can attach receipts or images to expenses.
 
-#### 3.1.10 Currency Support
+#### 3.1.10 Currency Support *(LATER)*
 
 - Users can add expenses in different currencies.
 - The system will convert and display expenses in a common currency based on exchange rates.
 
-#### 3.1.11 Expense Report Generation
+#### 3.1.11 Expense Report Generation *(LATER)*
 
 - Users can generate summary reports for individual or group expenses over a specified period.
 - Reports can be exported as PDF or Excel files.
 
-#### 3.1.12 Search and Filter
+#### 3.1.12 Search and Filter *(LATER)*
 
 - Users can search for specific expenses or transactions.
 - Users can filter expenses by date, category, or participant.
 
-#### 3.1.13 User Profile Management
+#### 3.1.13 User Profile Management *(LATER)*
 
 - Users can update their profile details, including name, email, and profile picture.
 - Users can change their password and manage account settings.
 
 #### 3.1.14 Settlement Options
 
-- Users can settle expenses through multiple options, such as PayPal, bank transfer, etc.
+- Users can settle expenses through multiple options, such as PayPal, bank transfer, etc. *(LATER)*
 - Users can record offline payments.
 
 #### 3.1.15 Audit Log
