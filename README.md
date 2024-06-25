@@ -119,12 +119,7 @@ The application will run on modern web browsers (Chrome, Firefox, Safari, Edge) 
 - Users can settle expenses through multiple options, such as PayPal, bank transfer, etc.
 - Users can record offline payments.
 
-#### 3.1.15 Privacy Settings
-
-- Users can set privacy settings for their groups and expenses.
-- Users can control who can see their activity and balances.
-
-#### 3.1.16 Audit Log
+#### 3.1.15 Audit Log
 
 - The system tracks all changes and transactions for transparency.
 - Users can view a log of all activities related to their account.
