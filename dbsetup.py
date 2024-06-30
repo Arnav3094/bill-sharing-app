@@ -1,7 +1,7 @@
 import mysql.connector
 from datetime import datetime
 from typing import List, Optional, Dict
-
+# should happen as soon as we open the app
 def setup_database():
     conn = mysql.connector.connect(
         host="",
