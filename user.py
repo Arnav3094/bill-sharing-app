@@ -8,6 +8,7 @@ class User:
         self.email = email
         self.password = password
         self.id = user_id or self.generate_user_id()
+        self.groups=[]
        
 
     def generate_user_id(self) -> str:
