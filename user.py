@@ -1,4 +1,4 @@
-import sqlite3
+import mysql.connector
 from datetime import datetime
 from typing import List, Dict, Tuple
 from collections import defaultdict
@@ -18,14 +18,14 @@ class User:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO User (UserID, Name, Password, EmailAddress)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """, (self.id, self.name, self.password, self.email))
         conn.commit()
 
     @staticmethod
     def get_by_id(conn, user_id: str) -> 'User':
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM User WHERE UserID = ?", (user_id,))
+        cursor.execute("SELECT * FROM User WHERE UserID = %s", (user_id,))
         row = cursor.fetchone()
         if row:
             user = User(row[1], row[2], row[3])
@@ -34,15 +34,13 @@ class User:
         return None
 
     def get_dues(self, conn) -> List[Tuple[str, float]]:
-        # To retrieve and simplify dues for the user
         cursor = conn.cursor()
         
-        # Retrieve expenses where the user is a participant
         cursor.execute("""
             SELECT e.PaidBy, ep.UserID, ep.AmountShared
             FROM Expense e
             JOIN ExpenseParticipants ep ON e.ExpenseID = ep.ExpenseID
-            WHERE ep.UserID = ? OR e.PaidBy = ?
+            WHERE ep.UserID = %s OR e.PaidBy = %s
         """, (self.id, self.id))
         
         rows = cursor.fetchall()
@@ -55,7 +53,6 @@ class User:
             if participant == self.id:
                 balances[paid_by] += amount
 
-        # Simplify the dues
         simplified_dues = [(user_id, amount) for user_id, amount in balances.items() if amount != 0]
         return simplified_dues
 
