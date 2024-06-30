@@ -4,10 +4,10 @@ from typing import List, Optional, Dict
 
 def setup_database():
     conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="rootdatabase24",
-        database="mydb"
+        host="",
+        user="",
+        password="",
+        database=""
     )
     
     cursor = conn.cursor()
