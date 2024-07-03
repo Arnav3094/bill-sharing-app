@@ -1,9 +1,9 @@
 import mysql.connector
-from flask import current_app
+from connection import *
 
 class Group:
-    def __init__(self, group_id=None, name=None, admin=None, description=None, members=None):
-        self._group_id = group_id
+    def __init__(self, name: str, admin: 'User', description: str, members=None): # type: ignore
+        self._group_id = None  # Initialize as None initially
         self._name = name
         self._admin = admin
         self._description = description
@@ -73,65 +73,63 @@ class Group:
     def __str__(self):
         return f"Group: {self._name}, Admin: {self._admin}, Members: {len(self._members)}"
     
+    @staticmethod
+    def create_group(name, admin, description, members):
+        insert_group_query = 'INSERT INTO Groups (name, admin_id, description) VALUES (%s, %s, %s)'
+        insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)'
+        
+        params = (name, admin.user_id, description)
+        group_id = execute_insert(insert_group_query, params)
+        
+        if group_id:
+            for member in members:
+                params = (group_id, member.user_id)
+                execute_insert(insert_member_query, params)
+        
+        return group_id
     
-    """@staticmethod
+    @staticmethod
     def get_group(group_id):
-        db = current_app.extensions['db']
-        cursor = db.cursor(dictionary=True)
-        cursor.execute('SELECT * FROM `Group` WHERE group_id = %s', (group_id,))
-        group_data = cursor.fetchone()
+        select_group_query = 'SELECT * FROM Groups WHERE group_id = %s'
+        select_members_query = 'SELECT user_id FROM GroupMembers WHERE group_id = %s'
+
+        group_data = execute_query(select_group_query, (group_id,))
         if not group_data:
             return None
-        cursor.execute('SELECT user_id FROM GroupMember WHERE group_id = %s', (group_id,))
-        members = [row['user_id'] for row in cursor.fetchall()]
-        return Group(group_id, group_data['name'], group_data['admin'], group_data['description'], members)
+        
+        members_data = execute_query(select_members_query, (group_id,), fetchall=True)
+        members = [member['user_id'] for member in members_data]
+
+        admin_user = Group.get_user(group_data['admin_id'])
+        member_users = [Group.get_user(member_id) for member_id in members]
+        
+        return Group(group_data['name'], admin_user, group_data['description'], member_users) if admin_user else None
 
     def add_description(self, description):
-        db = current_app.extensions['db']
-        cursor = db.cursor()
-        cursor.execute(
-            'UPDATE `Group` SET description = %s WHERE group_id = %s',
-            (description, self.group_id)
-        )
-        db.commit()
-        self.description = description
+        update_query = 'UPDATE Groups SET description = %s WHERE group_id = %s'
+        params = (description, self.group_id)
+        success = execute_insert(update_query, params)
+        if success:
+            self._description = description
+        return success
 
     def add_member(self, user_id):
-        db = current_app.extensions['db']
-        cursor = db.cursor()
-        cursor.execute(
-            'INSERT INTO GroupMember (group_id, user_id) VALUES (%s, %s)',
-            (self.group_id, user_id)
-        )
-        db.commit()
-        self._members.append(user_id)
+        insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)'
+        params = (self.group_id, user_id)
+        success = execute_insert(insert_member_query, params)
+        if success:
+            self._members.append(user_id)
+        return success
 
     def remove_member(self, user_id):
-        db = current_app.extensions['db']
-        cursor = db.cursor()
-        cursor.execute(
-            'DELETE FROM GroupMember WHERE group_id = %s AND user_id = %s',
-            (self.group_id, user_id)
-        )
-        db.commit()
-        self._members.remove(user_id) """
+        delete_member_query = 'DELETE FROM GroupMembers WHERE group_id = %s AND user_id = %s'
+        params = (self.group_id, user_id)
+        success = execute_insert(delete_member_query, params)
+        if success:
+            self._members.remove(user_id)
+        return success 
 
-    #@staticmethod
-    """ def create_group(name, admin, description, members):
-        db = current_app.extensions['db']
-        cursor = db.cursor()
-        cursor.execute(
-            'INSERT INTO `Group` (name, admin, description) VALUES (%s, %s, %s)',
-            (name, admin, description)
-        )
-        group_id = cursor.lastrowid
-        for member in members:
-            cursor.execute(
-                'INSERT INTO GroupMember (group_id, user_id) VALUES (%s, %s)',
-                (group_id, member)
-            )
-        db.commit()
-        return group_id """
+    
     
     
 
