@@ -1,10 +1,12 @@
 from connection import *
 from datetime import datetime
+from typing import List, Optional
+from user import *
 
 
-# TODO: Import User class
 class Group:
-    def __init__(self, admin: User, description: str = None, members = None, name: str = None):  # type: ignore
+    def __init__(self, admin: User, description: str = None, members = Optional[List[User]],
+                 name: str = None):  # type: ignore
         # TODO: Generate Group IDs @Ishaan
         self._group_id = None  # Initialize as None initially
         self._name = name
@@ -13,6 +15,11 @@ class Group:
         self._members = members if members is not None else []
         self.created = datetime.now()
         # store this time as datetime object in the database
+
+    def __repr__(self):
+        # TODO: change admin printing to print name/id of admin or add repr method in User class @Sravani and @Pranav
+        return (f"Group(name={self._name}, admin={self._admin}, members={self._members},"
+                f"description={self._description}, created={self.created})")
 
     # Getters and Setters
 
@@ -73,14 +80,15 @@ class Group:
             "group_id": self._group_id,
             "members": self._members,
             "admin": self._admin,
-            "description": self._description
+            "description": self._description,
+            "created": self.created
         }
 
     def __str__(self):
         return f"Group: {self._name}, Admin: {self._admin}, Members: {len(self._members)}"
 
     @staticmethod
-    def create_group(name, admin, description, members):
+    def create_group(admin: User, description: str = None, members = Optional[List[User]], name: str = None):
         insert_group_query = 'INSERT INTO Groups (name, admin_id, description) VALUES (%s, %s, %s)'
         insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)'
 
@@ -105,15 +113,15 @@ class Group:
 
         members_data = execute_query(select_members_query, (group_id,), fetchall = True)
         members = [member['user_id'] for member in members_data]
-        # TODO: Add import for User class
+        # TODO: Resolve get_user issue @Ishaan
         admin_user = Group.get_user(group_data['admin_id'])
         member_users = [Group.get_user(member_id) for member_id in members]
 
         # return Group(group_data['name'], admin_user, group_data['description'], member_users) if admin_user else None
-        return Group(admin=admin_user,
-                     name=group_data['name'],
-                     description=group_data['description'],
-                     members=member_users)
+        return Group(admin = admin_user,
+                     name = group_data['name'],
+                     description = group_data['description'],
+                     members = member_users)
 
     def add_description(self, description):
         update_query = 'UPDATE Groups SET description = %s WHERE group_id = %s'
