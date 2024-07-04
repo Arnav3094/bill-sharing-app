@@ -1,4 +1,4 @@
-from connection import *
+from connector import *
 from datetime import datetime
 from typing import List, Optional
 from user import *
