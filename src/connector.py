@@ -37,7 +37,7 @@ class Connector:
             self._database = database
 
         self._db = self.get_connection()
-        self._cursor = self._db.cursor(dictionary=True)
+        self._cursor = self._db.cursor(dictionary = True)
 
     def __repr__(self):
         return f"user:{self.user} host:{self.host} port:{self.port} database:{self.database}"
@@ -72,7 +72,7 @@ class Connector:
     @db.setter
     def db(self, value):
         self._db = value
-        self.cursor = self._db.cursor(dictionary=True)
+        self.cursor = self._db.cursor(dictionary = True)
 
     @property
     def cursor(self):
@@ -96,26 +96,40 @@ class Connector:
             db = mysql.connector.connect(**self.get_config())
             return db
         except mysql.connector.Error as err:
-            print(f"Error: {err}")
+            print(f"ERROR: {err}")
             return None
 
-    def execute(self, query, params=None, fetchall=False):
+    def execute(self, query, params = None, fetchall = True):
+        """
+        :param query: the query to be executed, possibly with placeholders
+        :param params: A way to prevent SQL injection
+        :param fetchall: whether to fetch all matching rows or not. Default is True
+        :return: returns result if query is not DML
+        """
+        query_type = "DML" if query.strip().split()[0].upper() in ("INSERT", "UPDATE", "DELETE") else "OTHER"
         try:
             self.cursor.execute(query, params) if params else self.cursor.execute(query)
-            if fetchall:
-                result = self.cursor.fetchall()
+            if query_type == "DML":
+                self.commit()
             else:
-                result = self.cursor.fetchone()
-            return result
+                return self.cursor.fetchall() if fetchall else self.cursor.fetchone()
         except mysql.connector.Error as err:
-            print(f"Error: {err}")
+            print(f"ERROR: {err}")
+            if query_type == "DML":
+                self.rollback()
             return None
+
+    def rollback(self):
+        try:
+            self.db.rollback()
+        except mysql.connector.Error as err:
+            print(f"ROLLBACK ERROR: {err}")
 
     def commit(self):
         try:
             self.db.commit()
         except mysql.connector.Error as err:
-            print(f"Commit Error: {err}")
+            print(f"COMMIT ERROR: {err}")
 
     def close(self):
         self.cursor.close()
