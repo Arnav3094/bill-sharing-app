@@ -10,7 +10,7 @@ class User:
         self.email = email
         self.password = password
         self.id = user_id or self.generate_user_id()
-        self.groups = []
+        self.groups = []g
 
     def generate_user_id(self) -> str:
         return f"U{uuid.uuid4()}"
