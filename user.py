@@ -42,6 +42,10 @@ class User:
         groups = [group_id for (group_id,) in cursor.fetchall()]
         return groups
 
+    @classmethod
+    def from_db(cls, user_id: str, name: str, email: str):
+        #Required for creating a user object in group class without password required
+        return cls(name=name, email=email, password=None, user_id=user_id)
 
     '''def get_dues(self, conn) -> List[Dict[str, float]]:
         cursor = conn.cursor()
