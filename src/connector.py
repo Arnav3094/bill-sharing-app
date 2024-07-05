@@ -163,6 +163,8 @@ class Connector:
             raise Exception(f"ROLLBACK ERROR: {err}")
 
     def commit(self):
+        if self.db is None:
+            raise Exception("ERROR: Database connection is closed")
         try:
             self.db.commit()
             print("LOG: Transaction committed successfully.")
@@ -170,7 +172,12 @@ class Connector:
             raise Exception(f"COMMIT ERROR: {err}")
 
     def close(self):
-        self.cursor.close()
-        print("LOG: Cursor closed successfully.")
-        self.db.close()
-        print("LOG: Database connection closed successfully.")
+        try:
+            self._cursor.close() if self._cursor is not None else None
+        except Exception as e:
+            print(f"ERROR closing cursor: {e}")
+        finally:
+            try:
+                self._db.close() if self._db is not None else None
+            except Exception as e:
+                print(f"ERROR closing db: {e}")
