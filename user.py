@@ -118,6 +118,10 @@ class User:
         return User(user_id=user_data['user_id'], username=user_data['username'], email=user_data['email'], 
                     password=user_data['password'], created=user_data['created'], connector=connector)
 
+    @classmethod
+    def from_db(cls, user_id: str, name: str, email: str):
+        #Required for creating a user object in group class without password required
+        return cls(name=name, email=email, password=None, user_id=user_id)
 
     @staticmethod
     def get_users(user_ids: List[str], connector: Connector):
