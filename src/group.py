@@ -6,11 +6,16 @@ from uuid import uuid4
 
 
 class Group:
-    def __init__(self, admin: User, connector: Connector = None, description: str = None,
-                 members = Optional[List[User]],
-                 name: str = None, password: str = "", filepath: str = "", user: str = "root", host: str = "localhost",
+    def __init__(self,  admin: User, name: str, group_id: str = None, connector: Connector = None, description: str = None,
+                 members = Optional[List[User]], password: str = "", filepath: str = "", user: str = "root", host: str = "localhost",
                  port: str = "3306", database: str = "bill_sharing_app"):
         """
+        Creates a group object and automatically updates the database with the new group if the group_id is not present in the database.
+        If the group is present in database, the group details are fetched from the database and the object is created.
+        However, any parameter that doesn't match the value in the database will raise an error as such a condition should never exist
+
+        **NOTE - This may not be the best way to handle this. We can discuss and change this if needed**
+
         :param admin: a User object representing the admin of the group (not part of members list)
         :param connector: the connector object used to connect to the database. If not provided, a new connector object will be created using the given parameters
         :param description: description of the group
@@ -23,7 +28,31 @@ class Group:
         :param port: port for the database
         :param database: name of the database
         """
-        self._group_id = f"G{uuid4()}"
+        self._connector = Connector(password = password, filepath = filepath, user = user, host = host, port = port,
+                                    database = database) if not connector else connector
+        check_group_id_query = "SELECT group_id FROM Groups WHERE group_id = %s"
+        group_exists = self.connector.execute(check_group_id_query, (group_id,))
+        if group_exists:
+            group_details_query = "SELECT * FROM Groups WHERE group_id = %s"
+            group_details = self.connector.execute(group_details_query, (group_id,))
+            self._group_id = group_id
+            self._name = group_details[0]['name']
+            self._admin = User.get_user(group_details[0]['admin_id'], self.connector)
+            self._description = group_details[0]['description']
+            self._members = User.get_users([member['user_id'] for member in self.connector.execute('SELECT user_id FROM GroupMembers WHERE group_id = %s', params = (group_id,))], self.connector)
+            if self.admin in self.members:
+                self._members.remove(self.admin)
+            self._created = group_details[0]['created']
+            if name != self.name:
+                raise ValueError("Name provided does not match the name in the database")
+            if admin and admin != self.admin:
+                raise ValueError("Admin provided does not match the admin in the database")
+            if description and description != self.description:
+                raise ValueError("Description provided does not match the description in the database")
+            if members and members != self.members:
+                raise ValueError("Members provided do not match the members in the database")
+        else:
+            self._group_id = f"G{str(uuid4())}"
         self._connector = connector
         self._name = name
         self._admin = admin
@@ -32,20 +61,19 @@ class Group:
         if admin in self._members:
             self._members.remove(admin)
         self._created = datetime.now()
-        self._connector = Connector(password = password, filepath = filepath, user = user, host = host, port = port,
-                                    database = database) if not connector else connector
-        if description:
-            insert_group_query = "INSERT INTO Groups (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
-            insert_group_params = (self._group_id, self._name, self._description, self._admin.user_id, self._created)
-        else:
-            insert_group_query = "INSERT INTO Groups (group_id, name, admin_id, created) VALUES (%s, %s, %s, %s)"
-            insert_group_params = (self._group_id, self._name, self._admin.user_id, self._created)
-        self.connector.execute(insert_group_query, params = insert_group_params)
+        if not group_exists:
+            if description:
+                insert_group_query = "INSERT INTO Groups (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
+                insert_group_params = (self._group_id, self._name, self._description, self._admin.user_id, self._created)
+            else:
+                insert_group_query = "INSERT INTO Groups (group_id, name, admin_id, created) VALUES (%s, %s, %s, %s)"
+                insert_group_params = (self._group_id, self._name, self._admin.user_id, self._created)
+            self.connector.execute(insert_group_query, params = insert_group_params)
 
-        insert_member_query = "INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)"
-        for member in members:
-            params = (self._group_id, member.user_id)
-            self.connector.execute(insert_member_query, params)
+            insert_member_query = "INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)"
+            for member in members:
+                params = (self._group_id, member.user_id)
+                self.connector.execute(insert_member_query, params)
 
     def __repr__(self):
         # TODO: change admin printing to print name/id of admin or add repr method in User class @Sravani and @Pranav
@@ -224,7 +252,8 @@ class Group:
         # Fetch member details
         member_users = User.get_users(member_ids, connector)
 
-        return Group(admin = admin_user,
+        return Group(group_id = group_id,
+                     admin = admin_user,
                      name = group_data['name'],
                      description = group_data['description'],
                      members = member_users,
