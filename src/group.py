@@ -266,6 +266,13 @@ class Group:
         if not user:
             raise ValueError(f"User with ID {user_id} not found in the database")
 
+        # Check if the user is already a member of the group
+        check_member_query = 'SELECT * FROM GroupMembers WHERE user_id = %s AND group_id = %s'
+        existing_member = self.connector.execute(check_member_query, (user_id, self.group_id))
+        if existing_member:
+            raise ValueError(f"User with ID {user_id} is already a member of this group")
+
+         # If not a member, proceed to add the user
         insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)'
         params = (self.group_id, user_id)
         self.connector.execute(insert_member_query, params)
@@ -278,6 +285,19 @@ class Group:
             missing_users_str = ", ".join(missing_users)
             raise ValueError(f"Users with IDs {missing_users_str} not found in the database")
 
+        # Check which of the user_ids are already members of the group
+        placeholders = ', '.join(['%s'] * len(user_ids))
+        check_members_query = f'SELECT user_id FROM GroupMembers WHERE user_id IN ({placeholders}) AND group_id = %s'
+        params = tuple(user_ids) + (self.group_id,)
+        existing_members = self.connector.execute(check_members_query, params)
+    
+        existing_member_ids = {member['user_id'] for member in existing_members}
+        new_member_ids = [user_id for user_id in user_ids if user_id not in existing_member_ids]
+    
+        if not new_member_ids:
+            raise ValueError("All provided users are already members of this group")
+
+        # Proceed to add only new members
         insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES ' + ','.join(['(%s, %s)'] * len(user_ids))
         params = []
         for user_id in user_ids:
