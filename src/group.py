@@ -50,16 +50,19 @@ class Group:
             if members and members != self.members:
                 raise ValueError("Members provided do not match the members in the database")
         else:
+            if group_id:
+                raise ValueError(f"ERROR[Group.__init__]: You are trying to assign a group_id to a group that does not exist in the database. group_id: {group_id}")
             self._group_id = f"G{str(uuid4())}"
-        self._connector = connector
-        self._name = name
-        self._admin = admin
-        self._description = description
-        self._members = members if members is not None else []
-        if admin in self._members:
-            self._members.remove(admin)
-        self._created = datetime.now()
-        if not group_exists:
+            self._connector = connector
+            self._name = name
+            self._admin = admin
+            self._description = description
+            self._members = members if members is not None else []
+            if admin in self._members:
+                self._members.remove(admin)
+            self._created = datetime.now()
+
+            # If group does not exist in the database, insert the group and its members
             if description:
                 insert_group_query = "INSERT INTO GroupDetails (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
                 insert_group_params = (self._group_id, self._name, self._description, self._admin.user_id, self._created)
