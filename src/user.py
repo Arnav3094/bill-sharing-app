@@ -5,26 +5,26 @@ from typing import List
 import hashlib
 
 class User:
-    def __init__(self, username: str, email: str, password: str, connector: Connector = None, 
+    def __init__(self, name: str, email: str, password: str, connector: Connector = None, 
                  user_id: str = None, created: datetime = None, filepath: str = "", db_user: str = "root", 
                  host: str = "localhost", port: str = "3306", database: str = "bill_sharing_app"):
         """
-        :param username: username of the user
+        :param name: name of the user
         :param email: email of the user
         :param password: password for the user account
         :param connector: the connector object used to connect to the database. If not provided, a new connector object will be created using the given parameters
         :param user_id: optional, the user ID if available
         :param created: optional, the creation datetime if available
         :param filepath: requires filepath to a JSON file containing the database credentials
-        :param db_user: username for the database
+        :param db_user: name for the database
         :param host: host for the database
         :param port: port for the database
         :param database: name of the database
         """
         self._user_id = user_id if user_id else f"U{uuid4()}"
-        self._username = username
+        self._name = name
         self._email = email
-        self._password = self.hash_password(password)
+        self._password = self.hash_password(password) if password else None
         self._created = created if created else datetime.now()
         self._connector = connector if connector else Connector(password=password, filepath=filepath, user=db_user, host=host, port=port, database=database)
         
@@ -34,8 +34,8 @@ class User:
             self.connector.execute(insert_user_query, params=insert_user_params)
 
     def __repr__(self):
-        return (f"User(user_id={self.user_id}, username={self.username}, email={self.email},"
-                f"created={self.created})")"
+        return (f"User(user_id={self.user_id}, name={self.name}, email={self.email},"
+                f"created={self.created})")
 
     @property
     def connector(self):
@@ -50,16 +50,16 @@ class User:
         return self._user_id
 
     @property
-    def username(self):
-        return self._username
+    def name(self):
+        return self._name
 
-    @username.setter
-    def username(self, new_username):
-        if not new_username:
-            raise ValueError("Username cannot be empty")
-        self._username = new_username
-        update_query = "UPDATE Users SET username = %s WHERE user_id = %s"
-        params = (new_username, self._user_id)
+    @name.setter
+    def name(self, new_name):
+        if not new_name:
+            raise ValueError("Name cannot be empty")
+        self._name = new_name
+        update_query = "UPDATE Users SET name = %s WHERE user_id = %s"
+        params = (new_name, self._user_id)
         self.connector.execute(update_query, params)
 
     @property
@@ -88,16 +88,22 @@ class User:
         return hashlib.sha256(password.encode()).hexdigest()
 
     @staticmethod
-    def register(username: str, email: str, password: str, connector: Connector):
+    def register(name: str, email: str, password: str, connector: Connector):
         """
         Register a new user.
-        :param username: Username of the new user
+        :param name: name of the new user
         :param email: Email of the new user
         :param password: Password of the new user
         :param connector: Connector object to interact with the database
         :return: User object for the registered user
         """
-        user = User(username=username, email=email, password=password, connector=connector)
+        query = "SELECT * FROM Users WHERE email = %s"
+        params = (email,)
+        existing_user = connector.execute(query, params=params, fetchall=False)
+        if existing_user:
+            raise ValueError("A user with this email already exists")
+        
+        user = User(name=name, email=email, password=password, connector=connector)
         return user
 
     @staticmethod
@@ -115,12 +121,12 @@ class User:
         user_data = connector.execute(query, params=params, fetchall=False)
         if not user_data:
             raise ValueError("Invalid email or password")
-        return User(user_id=user_data['user_id'], username=user_data['username'], email=user_data['email'], 
+        return User(user_id=user_data['user_id'], name=user_data['name'], email=user_data['email'], 
                     password=user_data['password'], created=user_data['created'], connector=connector)
 
     @classmethod
     def from_db(cls, user_id: str, name: str, email: str):
-        #Required for creating a user object in group class without password required
+        # Required for creating a user object in group class without password required
         return cls(name=name, email=email, password=None, user_id=user_id)
 
     @staticmethod
@@ -134,7 +140,7 @@ class User:
         placeholders = ', '.join(['%s'] * len(user_ids))
         query = f"SELECT * FROM Users WHERE user_id IN ({placeholders})"
         users_data = connector.execute(query, tuple(user_ids))
-        users = [User(user_id=user_data['user_id'], username=user_data['username'], email=user_data['email'],
+        users = [User(user_id=user_data['user_id'], name=user_data['name'], email=user_data['email'],
                       password=user_data['password'], created=user_data['created'], connector=connector)
                  for user_data in users_data]
         return users
@@ -144,15 +150,8 @@ class User:
          Retrieve the groups the user is a member of.
          :return: List of group IDs
          """
-         select_query = """
-         SELECT group_id 
-         FROM User_Groups 
-         WHERE user_id = %s
-         """
+         select_query = "SELECT group_id FROM GroupMembers WHERE user_id = %s"
          result = self.connector.execute(select_query, params=(self.user_id,))
-         group_ids = [row[0] for row in result]
+         group_ids = [row['group_id'] for row in result]
          return group_ids
 
-
-
-   
