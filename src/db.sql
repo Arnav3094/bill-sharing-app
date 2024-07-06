@@ -1,6 +1,6 @@
-CREATE database bill_sharing_app;
-use bill_sharing_app;
-CREATE TABLE Users (
+CREATE database IF NOT EXISTS bill_sharing_app;
+USE bill_sharing_app;
+CREATE TABLE IF NOT EXISTS Users (
   user_id VARCHAR(128) NOT NULL,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE Users (
   UNIQUE KEY email (email)
 );
 
-CREATE TABLE GroupDetails (
+CREATE TABLE IF NOT EXISTS GroupDetails (
   group_id VARCHAR(128) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description VARCHAR(255),
@@ -22,7 +22,7 @@ CREATE TABLE GroupDetails (
   KEY name (name)
 );
 
-CREATE TABLE Expenses (
+CREATE TABLE IF NOT EXISTS Expenses (
   expense_id VARCHAR(128) NOT NULL,
   group_id VARCHAR(128) NOT NULL,
   description TINYTEXT,
@@ -37,7 +37,7 @@ CREATE TABLE Expenses (
   KEY paid_by (paid_by)
 );
 
-CREATE TABLE Transactions (
+CREATE TABLE IF NOT EXISTS Transactions (
   trans_id VARCHAR(128) NOT NULL,
   expense_id VARCHAR(128) NOT NULL,
   payer_id VARCHAR(128) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE Transactions (
   KEY payee_id (payee_id)
 );
 
-CREATE TABLE GroupMembers (
+CREATE TABLE IF NOT EXISTS GroupMembers (
   user_id VARCHAR(128) NOT NULL,
   group_id VARCHAR(128) NOT NULL,
   PRIMARY KEY (user_id, group_id),
@@ -61,7 +61,7 @@ CREATE TABLE GroupMembers (
   FOREIGN KEY (group_id) REFERENCES GroupDetails(group_id)
 );
 
-CREATE TABLE ExpenseParticipants (
+CREATE TABLE IF NOT EXISTS ExpenseParticipants (
   expense_id VARCHAR(128) NOT NULL,
   user_id VARCHAR(128) NOT NULL,
   amount DECIMAL(10, 2) NOT NULL,
