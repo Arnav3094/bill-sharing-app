@@ -113,19 +113,25 @@ class Group:
         return self._admin
 
     @admin.setter
-    def admin(self, new_admin):
+    def admin(self, new_admin : User):
         if not new_admin:
             raise ValueError("Admin cannot be empty")
-        if new_admin.user_id not in [member.user_id for member in self.members]:
+        if new_admin not in self.members:
             raise ValueError("New admin should be a member of the group")
-        if self._admin and self._admin.user_id == new_admin.user_id:
+        if self.admin == new_admin:
             print(f"{new_admin} is already the admin of the group")
             return
+
+        # replace new_admin in GroupMembers with old admin
+        replace_in_group_members_query = "UPDATE GroupMembers SET user_id = %s WHERE group_id = %s AND user_id = %s"
+        self.connector.execute(replace_in_group_members_query, (self.admin.user_id, self.group_id, new_admin.user_id))
 
         # replace old admin in Group with new_admin
         replace_in_group_query = "UPDATE GroupDetails SET admin_id = %s WHERE group_id = %s"
         self.connector.execute(replace_in_group_query, (new_admin.user_id, self.group_id))
-        
+
+        self.members.append(self.admin)
+        self.members.remove(new_admin)
         self._admin = new_admin
 
     # description of the group
