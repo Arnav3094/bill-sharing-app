@@ -30,10 +30,10 @@ class Group:
         """
         self._connector = Connector(password = password, filepath = filepath, user = user, host = host, port = port,
                                     database = database) if not connector else connector
-        check_group_id_query = "SELECT group_id FROM Groups WHERE group_id = %s"
+        check_group_id_query = "SELECT group_id FROM GroupDetails WHERE group_id = %s"
         group_exists = self.connector.execute(check_group_id_query, (group_id,))
         if group_exists:
-            group_details_query = "SELECT * FROM Groups WHERE group_id = %s"
+            group_details_query = "SELECT * FROM GroupDetails WHERE group_id = %s"
             group_details = self.connector.execute(group_details_query, (group_id,))
             self._group_id = group_id
             self._name = group_details[0]['name']
@@ -63,10 +63,10 @@ class Group:
         self._created = datetime.now()
         if not group_exists:
             if description:
-                insert_group_query = "INSERT INTO Groups (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
+                insert_group_query = "INSERT INTO GroupDetails (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
                 insert_group_params = (self._group_id, self._name, self._description, self._admin.user_id, self._created)
             else:
-                insert_group_query = "INSERT INTO Groups (group_id, name, admin_id, created) VALUES (%s, %s, %s, %s)"
+                insert_group_query = "INSERT INTO GroupDetails (group_id, name, admin_id, created) VALUES (%s, %s, %s, %s)"
                 insert_group_params = (self._group_id, self._name, self._admin.user_id, self._created)
             self.connector.execute(insert_group_query, params = insert_group_params)
 
@@ -104,7 +104,7 @@ class Group:
         if not new_name:
             raise ValueError("Name cannot be empty")
         self._name = new_name
-        rename_query = "UPDATE Groups SET name = %s WHERE group_id = %s"
+        rename_query = "UPDATE GroupDetails SET name = %s WHERE group_id = %s"
         params = (new_name, self._group_id)
         self.connector.execute(rename_query, params)
 
@@ -127,7 +127,7 @@ class Group:
         self.connector.execute(replace_in_group_members_query, (self.admin.user_id, self.group_id, new_admin.user_id))
 
         # replace old admin in Group with new_admin
-        replace_in_group_query = "UPDATE Groups SET admin_id = %s WHERE group_id = %s"
+        replace_in_group_query = "UPDATE GroupDetails SET admin_id = %s WHERE group_id = %s"
         self.connector.execute(replace_in_group_query, (new_admin.user_id, self.group_id))
 
         self.members.append(self.admin)
@@ -145,7 +145,7 @@ class Group:
             raise ValueError("Description cannot be empty")
         if len(desc) > 255:
             raise ValueError("Description cannot be more than 255 characters")
-        update_query = "UPDATE Groups SET description = %s WHERE group_id = %s"
+        update_query = "UPDATE GroupDetails SET description = %s WHERE group_id = %s"
         self.connector.execute(update_query, (desc, self.group_id))
         self._description = desc
 
@@ -234,7 +234,7 @@ class Group:
         :param connector: connector object to be used to fetch the group details
         :return: Group object
         """
-        select_group_query = 'SELECT * FROM Groups WHERE group_id = %s'
+        select_group_query = 'SELECT * FROM GroupDetails WHERE group_id = %s'
         group_data = connector.execute(select_group_query, (group_id,))
         if not group_data:
             raise ValueError(f"Group with ID {group_id} not found")
