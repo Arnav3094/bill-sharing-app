@@ -88,19 +88,6 @@ class User:
         return self._email
 
     @property
-    def password(self):
-        return self._password
-
-    @password.setter
-    def password(self, new_password):
-        if not new_password:
-            raise ValueError("Password cannot be empty")
-        self._password = self.hash_password(new_password)
-        update_query = "UPDATE Users SET password = %s WHERE user_id = %s"
-        params = (self._password, self._user_id)
-        self.connector.execute(update_query, params)
-
-    @property
     def created(self):
         return self._created
 
@@ -123,9 +110,7 @@ class User:
         existing_user = connector.execute(query, params = params, fetchall = False)
         if existing_user:
             raise ValueError("A user with this email already exists")
-
-        user = User(name = name, email = email, password = password, connector = connector)
-        return user
+        return User(name = name, email = email, connector = connector)
 
     @staticmethod
     def login(email: str, password: str, connector: Connector):
@@ -142,13 +127,21 @@ class User:
         user_data = connector.execute(query, params = params, fetchall = False)
         if not user_data:
             raise ValueError("Invalid email or password")
-        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
-                    password = user_data['password'], created = user_data['created'], connector = connector)
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
 
-    @classmethod
-    def from_db(cls, user_id: str, name: str, email: str):
-        # Required for creating a user object in group class without password required
-        return cls(name = name, email = email, password = None, user_id = user_id)
+    @staticmethod
+    def get_user(user_id: str, connector: Connector):
+        """
+        Retrieve a user from the database using the user_id provided and create a User object.
+        :param user_id: User ID
+        :param connector: Connector object to interact with the database
+        :return: User object created using the user_id
+        """
+        query = "SELECT * FROM Users WHERE user_id = %s"
+        user_data = connector.execute(query, params = (user_id,), fetchall = False)
+        if not user_data:
+            raise ValueError(f"ERROR[User.get_user]: User with user_id: {user_id} does not exist in the database.")
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
 
     @staticmethod
     def get_users(user_ids: List[str], connector: Connector):
@@ -161,8 +154,7 @@ class User:
         placeholders = ', '.join(['%s'] * len(user_ids))
         query = f"SELECT * FROM Users WHERE user_id IN ({placeholders})"
         users_data = connector.execute(query, tuple(user_ids))
-        users = [User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
-                      password = user_data['password'], created = user_data['created'], connector = connector)
+        users = [User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
                  for user_data in users_data]
         return users
 
