@@ -108,19 +108,19 @@ class Group:
         created = datetime.now()
 
         params = (group_id, name, description, admin.user_id, created,)
-        group_id = db.execute_insert(insert_group_query, params)
+        group_id = db.execute(insert_group_query, params)
 
         if group_id:
             for member in members:
                 params = (group_id, member.user_id)
-                db.execute_insert(insert_member_query, params)
+                db.execute(insert_member_query, params)
 
         return group_id
 
     @staticmethod
     def get_user(user_id):
         select_user_query = 'SELECT user_id, name, email FROM Users WHERE user_id = %s'
-        user_data = db.execute_query(select_user_query, (user_id,))
+        user_data = db.execute(select_user_query, (user_id,))
         if not user_data:
             raise ValueError(f"No group found with group_id: {user_id}")
         return User.from_db(user_id=user_data['user_id'], name=user_data['name'], email=user_data['email'])
@@ -131,11 +131,11 @@ class Group:
         select_group_query = 'SELECT * FROM Groups WHERE group_id = %s'
         select_members_query = 'SELECT user_id FROM GroupMembers WHERE group_id = %s'
 
-        group_data = db.execute_query(select_group_query, (group_id,))
+        group_data = db.execute(select_group_query, (group_id,))
         if not group_data:
             raise ValueError(f"No group found with group_id: {group_id}")
 
-        members_data = db.execute_query(select_members_query, (group_id,), fetchall=True)
+        members_data = db.execute(select_members_query, (group_id,), fetchall=True)
         member_ids = [member['user_id'] for member in members_data]
 
         # Fetch admin user details using get_user method
@@ -156,7 +156,7 @@ class Group:
     def add_description(self, description):
         update_query = 'UPDATE Groups SET description = %s WHERE group_id = %s'
         params = (description, self.group_id)
-        success = db.execute_insert(update_query, params)
+        success = db.execute(update_query, params)
         if success:
             self._description = description
         return success
@@ -164,7 +164,7 @@ class Group:
     def add_member(self, user_id):
         insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)'
         params = (self.group_id, user_id)
-        success = db.execute_insert(insert_member_query, params)
+        success = db.execute(insert_member_query, params)
         if success:
             self._members.append(user_id)
         return success
@@ -172,7 +172,7 @@ class Group:
     def remove_member(self, user_id):
         delete_member_query = 'DELETE FROM GroupMembers WHERE group_id = %s AND user_id = %s'
         params = (self.group_id, user_id)
-        success = db.execute_insert(delete_member_query, params)
+        success = db.execute(delete_member_query, params)
         if success:
             self._members.remove(user_id)
         return success
@@ -180,7 +180,7 @@ class Group:
     def check_member_in_db(self, user_id):
         # Function to check if a user is present in the database
         query = 'SELECT COUNT(1) FROM Users WHERE user_id = %s'
-        result = db.execute_query(query, (user_id,))
+        result = db.execute(query, (user_id,))
         return result['count'] == 1
 
 
