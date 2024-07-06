@@ -1,6 +1,4 @@
-from connector import *
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 from user import *
 from uuid import uuid4
 
