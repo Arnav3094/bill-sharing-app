@@ -43,12 +43,12 @@ class Group:
             self._created = group_details[0]['created']
             if name != self.name:
                 raise ValueError("Name provided does not match the name in the database")
-            if admin and admin != self.admin:
-                raise ValueError("Admin provided does not match the admin in the database")
+            """ if admin and admin != self.admin:
+                raise ValueError("Admin provided does not match the admin in the database") """
             if description and description != self.description:
                 raise ValueError("Description provided does not match the description in the database")
-            if members and members != self.members:
-                raise ValueError("Members provided do not match the members in the database")
+            """ if members and members != self.members:
+                raise ValueError("Members provided do not match the members in the database") """
         else:
             if group_id:
                 raise ValueError(f"ERROR[Group.__init__]: You are trying to assign a group_id to a group that does not exist in the database. group_id: {group_id}")
@@ -61,7 +61,7 @@ class Group:
             if admin in self._members:
                 self._members.remove(admin)
             self._created = datetime.now()
-
+                       
             # If group does not exist in the database, insert the group and its members
             if description:
                 insert_group_query = "INSERT INTO GroupDetails (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
@@ -117,7 +117,7 @@ class Group:
     def admin(self, new_admin : User):
         if not new_admin:
             raise ValueError("Admin cannot be empty")
-        if new_admin not in self.members:
+        if not any(member == new_admin.user_id for member in self.members):
             raise ValueError("New admin should be a member of the group")
         if self.admin == new_admin:
             print(f"{new_admin} is already the admin of the group")
@@ -132,7 +132,7 @@ class Group:
         self.connector.execute(replace_in_group_query, (new_admin.user_id, self.group_id))
 
         self.members.append(self.admin)
-        self.members.remove(new_admin)
+        self.members.remove(new_admin.user_id)
         self._admin = new_admin
 
     # description of the group
@@ -239,6 +239,8 @@ class Group:
         group_data = connector.execute(select_group_query, (group_id,))
         if not group_data:
             raise ValueError(f"Group with ID {group_id} not found")
+
+        group_data = group_data[0] #Extracting the single dictionary from the list
 
         # Fetch member user IDs
         select_members_query = 'SELECT user_id FROM GroupMembers WHERE group_id = %s'
