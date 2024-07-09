@@ -24,21 +24,36 @@ class User:
         self._connector = connector if connector else Connector(filepath = filepath,
                                                                 user = db_user, host = host, port = port,
                                                                 database = database)
-        check_user_id_query = "SELECT user_id FROM Users WHERE user_id = %s"
-        user_exists = self.connector.execute(check_user_id_query, (user_id,))
-        if user_exists:
-            user_details_query = "SELECT * FROM Users WHERE user_id = %s"
-            user_details = self.connector.execute(user_details_query, (user_id,))
-            self._user_id = user_id
-            self._name = user_details[0]['name']
-            self._email = user_details[0]['email']
-            self._created = user_details[0]['created']
-            if name != self.name:
-                raise ValueError("Name provided does not match the name in the database")
-            if email != self.email:
-                raise ValueError("Email provided does not match the email in the database")
-            if password:
-                raise ValueError("ERROR[User.__init__]: User already exists. Password cannot be changed.")
+        user_exists = None
+        if user_id:
+            check_user_id_query = "SELECT user_id FROM Users WHERE user_id = %s"
+            user_exists = self.connector.execute(check_user_id_query, (user_id,))
+
+        # Check if the email exists
+        email_exists = None
+        if email:
+            check_email_query = "SELECT * FROM Users WHERE email = %s"
+            email_exists = self.connector.execute(check_email_query, (email,))
+
+        existing_user = user_exists or email_exists
+        if existing_user:
+             # Use the email to retrieve user details if email exists, otherwise use user_id
+            user_details_query = "SELECT * FROM Users WHERE " + ("email = %s" if email_exists else "user_id = %s")
+            user_details = self.connector.execute(user_details_query, (email if email_exists else user_id,))
+            if user_details:
+                self._user_id = user_id
+                self._name = user_details[0]['name']
+                self._email = user_details[0]['email']
+                self._created = user_details[0]['created']
+                if name != self.name:
+                    raise ValueError("ERROR[User.__init__]:Name provided does not match the name in the database")
+                if email and email != self.email:
+                    raise ValueError("ERROR[User.__init__]:Email provided does not match the email in the database")
+                if password:
+                    raise ValueError("ERROR[User.__init__]: User already exists. Password cannot be changed.")
+            else:
+                # Handle case where user_details is empty (should not happen if existing_user is True)
+                raise ValueError("ERROR[User.__init__]: User does not exist in the database.")
         else:
             if user_id:
                 raise ValueError(f"ERROR[User.__init__]: You are trying to assign a user_id to a group that does not exist in the database. user_id: {user_id}")
@@ -48,7 +63,7 @@ class User:
             self._name = name
             self._email = email
             self._created = datetime.now()
-
+            self._password = User.hash_password(password)  
             # Insert the user into the database
             insert_user_query = "INSERT INTO Users (user_id, name, email, password, created) VALUES (%s, %s, %s, %s, %s)"
             insert_user_params = (self._user_id, self._name, self._email, self._password, self._created)
@@ -96,23 +111,6 @@ class User:
         return hashlib.sha256(password.encode()).hexdigest()
 
     @staticmethod
-    def register(name: str, email: str, password: str, connector: Connector):
-        """
-        Register a new user.
-        :param name: name of the new user
-        :param email: Email of the new user
-        :param password: Password of the new user
-        :param connector: Connector object to interact with the database
-        :return: User object for the registered user
-        """
-        query = "SELECT * FROM Users WHERE email = %s"
-        params = (email,)
-        existing_user = connector.execute(query, params = params, fetchall = False)
-        if existing_user:
-            raise ValueError("A user with this email already exists")
-        return User(name = name, email = email, connector = connector)
-
-    @staticmethod
     def login(email: str, password: str, connector: Connector):
         """
         Login a user.
@@ -126,7 +124,7 @@ class User:
         params = (email, hashed_password)
         user_data = connector.execute(query, params = params, fetchall = False)
         if not user_data:
-            raise ValueError("Invalid email or password")
+            raise ValueError("ERROR[User.login]:Invalid email or password")
         return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
 
     @staticmethod
