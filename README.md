@@ -1,4 +1,4 @@
-﻿# Software Requirements Documentation
+# Software Requirements Documentation
 
 ## 1. Introduction
 
@@ -26,10 +26,22 @@ This application is intended to be a standalone web-based solution for managing 
 
 ### 2.2 Product Functions
 
+#### Phase 1: Building Business Logic
+
+The primary focus of this phase to set up the backend side logic.
+
+Primary Features:
 - User Registration and Login
 - Group Creation and Management
 - Expense Adding and Sharing
 - Expense Settlement
+- Report Generation
+  
+#### Phase 2: Building UI and Extra Features
+
+Some of the Features in the pipeline are:
+- Build the frontend and work on the UI
+- Building API to connect the backend to the frontend
 - Notifications and Reminders
 - Dashboard and Reporting
 
@@ -46,83 +58,91 @@ The application will run on modern web browsers (Chrome, Firefox, Safari, Edge) 
 
 ### 3.1 Functional Requirements
 
-#### 3.1.1 User Registration and Login
+#### 3.1.1 Phase 1:
+
+##### 3.1.1.1 User Registration and Login
 
 - Users can register using an email address and password.
 - Users can log in using their registered credentials.
-- Password recovery option via email.
 
-#### 3.1.2 Creating and Managing Groups
+##### 3.1.1.2 Creating and Managing Groups
 
 - Users can create groups and add members by email.
 - Users can edit group details (name, description).
-- Group admins can remove members and manage group settings.
 
-#### 3.1.3 Adding and Managing Expenses
+##### 3.1.1.3 Adding and Managing Expenses
 
 - Users can add expenses with details such as amount, date, and description.
 - Users can specify participants for the expense and split amounts unevenly (e.g., 30% for Person A, 50% for Person B).
 - Users can edit or delete expenses.
 
-#### 3.1.4 Clearing Expenses and Transactions
+##### 3.1.1.4 Clearing Expenses and Transactions
 
 - Users can record payments made to settle expenses.
 - Users can view outstanding balances with other users and groups.
+- Users can record offline payments.
 
-#### 3.1.5 Dashboard *(LATER)*
-
-- Users can see an overview of all expenses, balances, and group activities.
-- Users can view recent transactions and pending settlements.
-
-#### 3.1.6 Notifications *(LATER)*
-
-- Users receive email and/or push notifications for new expenses, payments, and reminders.
-- Users can manage notification preferences.
-
-#### 3.1.7 Expense Categories
+##### 3.1.1.5 Expense Categories
 
 - Users can categorize expenses (e.g., food, travel, utilities).
 - Users can filter expenses by category.
 
-#### 3.1.8 Recurring Expenses
+##### 3.1.1.6 Recurring Expenses
 
 - Users can set up recurring expenses (e.g., monthly rent).
-- Users receive reminders for upcoming recurring expenses.
 
-#### 3.1.9 Expense Notes and Attachments *(LATER)*
-
-- Users can add notes to expenses for additional details.
-- Users can attach receipts or images to expenses.
-
-#### 3.1.10 Currency Support *(LATER)*
-
-- Users can add expenses in different currencies.
-- The system will convert and display expenses in a common currency based on exchange rates.
-
-#### 3.1.11 Expense Report Generation *(LATER)*
-
-- Users can generate summary reports for individual or group expenses over a specified period.
-- Reports can be exported as PDF or Excel files.
-
-#### 3.1.12 Search and Filter *(LATER)*
+##### 3.1.1.7 Search and Filter
 
 - Users can search for specific expenses or transactions.
 - Users can filter expenses by date, category, or participant.
 
-#### 3.1.13 User Profile Management *(LATER)*
+#### 3.1.1.9 Audit Log
+
+- The system tracks all changes and transactions for transparency.
+- Users can view a log of all activities related to their account.
+
+##### 3.1.1.10 Report Generation
+- Users can generate reports to determine the split between group members to make settling up offline easy
+- The report will contain information about the sum owed by different users to each other
+
+#### 3.1.2 Phase 2: Extra Features and UI
+
+##### 3.1.2.1 Password recovery option via email.  
+
+##### 3.1.2.2 Group admins can remove members and manage group settings.
+
+##### 3.1.2.3 Users receive reminders for upcoming recurring expenses.
+
+##### 3.1.2. Dashboard *(LATER)*
+
+- Users can see an overview of all expenses, balances, and group activities.
+- Users can view recent transactions and pending settlements.
+
+##### 3.1.6 Notifications *(LATER)*
+
+- Users receive email and/or push notifications for new expenses, payments, and reminders.
+- Users can manage notification preferences.
+
+##### 3.1.9 Expense Notes and Attachments *(LATER)*
+
+- Users can add notes to expenses for additional details.
+- Users can attach receipts or images to expenses.
+
+##### 3.1.10 Currency Support *(LATER)*
+
+- Users can add expenses in different currencies.
+- The system will convert and display expenses in a common currency based on exchange rates.
+
+##### 3.1.11 Expense Report Generation *(LATER)*
+
+- Users can generate summary reports for individual or group expenses over a specified period.
+- Reports can be exported as PDF or Excel files.
+
+##### 3.1.13 User Profile Management *(LATER)*
 
 - Users can update their profile details, including name, email, and profile picture.
 - Users can change their password and manage account settings.
 
-#### 3.1.14 Settlement Options
-
-- Users can settle expenses through multiple options, such as PayPal, bank transfer, etc. *(LATER)*
-- Users can record offline payments.
-
-#### 3.1.15 Audit Log
-
-- The system tracks all changes and transactions for transparency.
-- Users can view a log of all activities related to their account.
 
 ### 3.2 Non-Functional Requirements
 
