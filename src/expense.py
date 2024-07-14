@@ -305,16 +305,20 @@ class Expense:
     @staticmethod
     def get_expense(expense_id: str, connector: Connector):
         """
-        Retrieves an expense from the database based on the expense_id and returns an Expense object.
-        :param expense_id:
-        :param connector:
-        :return: Expense object
+        Retrieves an expense from the database based on the expense ID.
+
+        Args:
+            expense_id (str): The ID of the expense to retrieve.
+            connector (Connector): The database connector.
+
+        Returns:
+            Expense: The retrieved Expense object.
         """
-        query = "SELECT expense_id FROM Expenses WHERE expense_id = %s"
-        expense_exists = connector.execute(query, (expense_id,), fetchall = False)
-        if not expense_exists:
+        query = "SELECT * FROM Expenses WHERE expense_id = %s"
+        expense_data = connector.execute(query, (expense_id,), fetchall=False)
+        if not expense_data:
             raise ValueError(f"Expense with ID {expense_id} not found.")
-        return Expense(expense_id = expense_id, connector=connector)
+        return Expense(expense_id=expense_data['expense_id'], description=expense_data['description'], amount=expense_data['amount'], payer=expense_data['paid_by'], group=expense_data['group_id'], timestamp=expense_data['timestamp'], connector=connector)
 
     @staticmethod
     def get_expenses(group_id: str, connector: Connector):
@@ -330,9 +334,7 @@ class Expense:
         """
         query = "SELECT * FROM Expenses WHERE group_id = %s"
         expenses_data = connector.execute(query, (group_id,))
-        return [Expense(expense_id = expense['expense_id'], description = expense['description'],
-                        amount = expense['amount'], payer = expense['paid_by'], group = expense['group_id'],
-                        timestamp = expense['timestamp'], connector = connector) for expense in expenses_data]
+        return [Expense(expense_id=expense['expense_id'], description=expense['description'], amount=expense['amount'], payer=expense['paid_by'], group=expense['group_id'], timestamp=expense['timestamp'], connector=connector) for expense in expenses_data]
 
     def split_equally(self, participants: List['User']):
         """
