@@ -37,7 +37,7 @@ class User:
 
         existing_user = user_exists or email_exists
         if existing_user:
-             # Use the email to retrieve user details if email exists, otherwise use user_id
+            # Use the email to retrieve user details if email exists, otherwise use user_id
             user_details_query = "SELECT * FROM Users WHERE " + ("email = %s" if email_exists else "user_id = %s")
             user_details = self.connector.execute(user_details_query, (email if email_exists else user_id,))
             if user_details:
@@ -63,7 +63,7 @@ class User:
             self._name = name
             self._email = email
             self._created = datetime.now()
-            self._password = User.hash_password(password)  
+            self._password = User.hash_password(password)
             # Insert the user into the database
             insert_user_query = "INSERT INTO Users (user_id, name, email, password, created) VALUES (%s, %s, %s, %s, %s)"
             insert_user_params = (self._user_id, self._name, self._email, self._password, self._created)
@@ -92,7 +92,7 @@ class User:
     @name.setter
     def name(self, new_name):
         if not new_name:
-            raise ValueError("Name cannot be empty")
+            raise ValueError("ERROR[User.name.setter]: Name cannot be empty")
         self._name = new_name
         update_query = "UPDATE Users SET name = %s WHERE user_id = %s"
         params = (new_name, self._user_id)
@@ -125,7 +125,8 @@ class User:
         user_data = connector.execute(query, params = params, fetchall = False)
         if not user_data:
             raise ValueError("ERROR[User.login]:Invalid email or password")
-        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                    created = user_data['created'], connector = connector)
 
     @staticmethod
     def get_user(user_id: str, connector: Connector):
@@ -139,7 +140,8 @@ class User:
         user_data = connector.execute(query, params = (user_id,), fetchall = False)
         if not user_data:
             raise ValueError(f"ERROR[User.get_user]: User with user_id: {user_id} does not exist in the database.")
-        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                    created = user_data['created'], connector = connector)
 
     @staticmethod
     def get_users(user_ids: List[str], connector: Connector):
@@ -152,7 +154,8 @@ class User:
         placeholders = ', '.join(['%s'] * len(user_ids))
         query = f"SELECT * FROM Users WHERE user_id IN ({placeholders})"
         users_data = connector.execute(query, tuple(user_ids))
-        users = [User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
+        users = [User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                      created = user_data['created'], connector = connector)
                  for user_data in users_data]
         return users
 
