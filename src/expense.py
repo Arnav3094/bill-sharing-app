@@ -5,27 +5,106 @@ from datetime import datetime
 from uuid import uuid4
 from typing import List, Dict
 
+
 class Expense:
-    def __init__(self, description: str, amount: float, payer: User, group: 'Group',  timestamp: datetime = None, expense_id: str = None, connector: Connector = None):
+    def __init__(self, amount: float, payer: User, group: Group, participants: Dict[User, float], expense_id: str = None,
+                 tag: str = None,
+                 connector: Connector = None, description: str = None, password: str = "", filepath: str = "",
+                 user: str = "root", host: str = "localhost", port: str = "3306", database: str = "bill_sharing_app"):
         """
         Initializes an Expense object.
 
-        Args:
-            description (str): The description of the expense.
-            amount (float): The amount of the expense.
-            payer (User): The user who paid for the expense.
-            group (Group): The group to which the expense belongs.
-            timestamp (datetime, optional): The timestamp of the expense. Defaults to None.
-            expense_id (str, optional): The unique ID of the expense. Defaults to None.
-            connector (Connector, optional): The database connector. Defaults to None.
+        :param amount (required): The amount of the expense.
+        :param payer (required): The user who paid for the expense.
+        :param group (required): The group to which the expense belongs.
+        :param participants (required): The dictionary mapping User to the amount the user owes. This MUST CONTAIN THE EXPENSE PAYER as well, with the appropriate amount in negative or positive
+        :param expense_id: The unique ID of the expense. Defaults to None.
+        :param tag: The tag the expense is marked with. Defaults to None.
+        :param connector: The database connector. Defaults to None.
+        :param description: The description of the expense.
+
+        :param password: The password for the database. Defaults to an empty string.
+        :param filepath: The path to the database file. Defaults to an empty string.
+        :param user: The username for the database. Defaults to "root".
+        :param host: The host for the database. Defaults to "localhost".
+        :param port: The port for the database. Defaults to "3306".
+        :param database: The name of the database. Defaults to "bill_sharing_app".
         """
-        self._expense_id = expense_id if expense_id else f"E{uuid4()}"
-        self._description = description
-        self._amount = amount
-        self._payer = payer
-        self._group = group
-        self._timestamp = timestamp if timestamp else datetime.now()
-        self._connector = connector
+        self._connector = connector if connector else Connector(password = password, filepath = filepath, user = user,
+                                                                host = host, port = port, database = database)
+        check_expense_id_query = "SELECT expense_id FROM Expenses where expense_id = %s"
+        expense_exists = self._connector.execute(check_expense_id_query, params = (expense_id,))
+        if expense_exists:
+            expense_details_query = "SELECT * FROM Expenses where expense_id = %s"
+            expense_details = self._connector.execute(expense_details_query, params = (expense_id,))
+            self._expense_id = expense_id
+            self._amount = expense_details[0]['amount']
+            self._payer = User.get_user(expense_details[0]['paid_by'], self._connector)
+            self._group = Group.get_group(expense_details[0]['group_id'], self._connector)
+            self._tag = expense_details[0]['tag']
+            self._description = expense_details[0]['description']
+            self._timestamp = expense_details[0]['timestamp']
+            get_participant_ids_query = "SELECT user_id FROM ExpenseParticipants WHERE expense_id = %s"
+            participant_ids = self._connector.execute(get_participant_ids_query, params = (expense_id,))
+            self._participants = User.get_users(participant_ids, self._connector)
+
+            if self._amount != amount:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Amount provided does not match the amount in the database for expense_id {expense_id}")
+            if self._payer != payer:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Payer provided does not match the payer in the database for expense_id {expense_id}")
+            if self._group != group:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Group provided does not match the group in the database for expense_id {expense_id}")
+            if self._tag != tag:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Tag provided does not match the tag in the database for expense_id {expense_id}")
+            if self._description != description:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Description provided does not match the description in the database for expense_id {expense_id}")
+            if self._participants != participants:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Participants provided do not match the participants in the database for expense_id {expense_id}")
+
+        else:
+            self._expense_id = f"E{str(uuid4())}"
+            self._description = description
+            if amount <= 0:
+                raise ValueError("ERROR[Expense.__init__]: Amount cannot be less than or equal to 0.")
+            self._amount = amount
+            self._payer = payer
+            self._group = group
+            self._connector = connector
+            self._timestamp = datetime.now()
+            self._tag = tag
+            if len(participants) == 0:
+                raise ValueError("ERROR[Expense.__init__]: Participants cannot be empty.")
+            self._participants = participants
+
+            if description and tag:
+                insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, description, timestamp, paid_by, amount, tag) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                insert_expense_params = (
+                self._expense_id, self._group.group_id, self._description, self._timestamp, self._payer.user_id,
+                self._amount, tag)
+            elif description:
+                insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, description, timestamp, paid_by, amount) VALUES (%s, %s, %s, %s, %s, %s)"
+                insert_expense_params = (
+                self._expense_id, self._group.group_id, self._description, self._timestamp, self._payer.user_id,
+                self._amount)
+            elif tag:
+                insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, timestamp, paid_by, amount, tag) VALUES (%s, %s, %s, %s, %s, %s)"
+                insert_expense_params = (
+                self._expense_id, self._group.group_id, self._timestamp, self._payer.user_id, self._amount, tag)
+            else:
+                insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, timestamp, paid_by, amount) VALUES (%s, %s, %s, %s, %s)"
+                insert_expense_params = (
+                self._expense_id, self._group.group_id, self._timestamp, self._payer.user_id, self._amount)
+
+            self._connector.execute(insert_expense_query, insert_expense_params)
+            insert_participants_query = "INSERT INTO ExpenseParticipants (expense_id, user_id, amount, settled) VALUES (%s, %s, %s, %s)"
+            for user, amount in participants.items():
+                self._connector.execute(insert_participants_query, (self._expense_id, user.user_id, amount, 'NO'))
 
     def __repr__(self):
         """
