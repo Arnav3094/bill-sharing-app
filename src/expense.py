@@ -206,8 +206,10 @@ class Expense:
         raise AttributeError("Participants cannot be changed directly. Use split methods instead.")
 
     def delete_expense(self):
-        """
-        Deletes the expense from the database.
+        expense_query = "DELETE FROM Expenses WHERE expense_id = %s"
+        self._connector.execute(expense_query, (self.expense_id,))
+        expense_participants_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s"
+        self._connector.execute(expense_participants_query, (self.expense_id,))
 
         Returns:
             None
