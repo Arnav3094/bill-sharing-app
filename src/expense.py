@@ -305,20 +305,16 @@ class Expense:
     @staticmethod
     def get_expense(expense_id: str, connector: Connector):
         """
-        Retrieves an expense from the database based on the expense ID.
-
-        Args:
-            expense_id (str): The ID of the expense to retrieve.
-            connector (Connector): The database connector.
-
-        Returns:
-            Expense: The retrieved Expense object.
+        Retrieves an expense from the database and returns an Expense object by handing the expense id to the constructor
+        :param expense_id: The ID of the expense.
+        :param connector: The database connector.
+        :return: Expense object
         """
         query = "SELECT * FROM Expenses WHERE expense_id = %s"
-        expense_data = connector.execute(query, (expense_id,), fetchall=False)
-        if not expense_data:
+        expense_exists = connector.execute(query, (expense_id,), fetchall=False)
+        if not expense_exists:
             raise ValueError(f"Expense with ID {expense_id} not found.")
-        return Expense(expense_id=expense_data['expense_id'], description=expense_data['description'], amount=expense_data['amount'], payer=expense_data['paid_by'], group=expense_data['group_id'], timestamp=expense_data['timestamp'], connector=connector)
+        return Expense(expense_id=expense_id, connector=connector)
 
     @staticmethod
     def get_expenses(group_id: str, connector: Connector):
