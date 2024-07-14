@@ -272,6 +272,11 @@ class Expense:
             update_params.append(description)
             self._description = description
 
+        if update_fields:
+            update_query = f"UPDATE Expenses SET {', '.join(update_fields)} WHERE expense_id = %s"
+            update_params.append(self.expense_id)
+            self._connector.execute(update_query, update_params)
+
         if participants:
             current_participants = self.participants
             new_participant_ids = set(participants.keys())
@@ -280,14 +285,22 @@ class Expense:
             if participant_ids_to_delete:
                 delete_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s AND user_id = %s"
                 delete_params = [(self.expense_id, user_id) for user_id in participant_ids_to_delete]
-            participants_to_insert = {user.user_id: amount for user, amount in participants.items() if user.user_id not in existing_participant_ids}
+                self._connector.execute(delete_query, delete_params)
+
+            participants_to_insert = {user.user_id: amount for user, amount in participants.items() if
+                                      user.user_id not in existing_participant_ids}
             if participants_to_insert:
                 insert_query = "INSERT INTO ExpenseParticipants (expense_id, user_id, amount, settled) VALUES (%s, %s, %s, %s)"
                 insert_params = [(self.expense_id, user_id, amount, 'NO') for user_id, amount in participants_to_insert.items()]
-            participants_to_update = {user.user_id: amount for user, amount in participants.items() if user.user_id in existing_participant_ids and amount != current_participants[user.user_id]}
+                self._connector.execute(insert_query, insert_params)
+
+            participants_to_update = {user.user_id: amount for user, amount in participants.items() if
+                                      user.user_id in existing_participant_ids and amount != current_participants[user.user_id]}
             if participants_to_update:
                 update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
-                update_params = [(amount, self.expense_id, user_id) for user_id, amount in participants_to_update.items()]
+                update_params = [(amount, self.expense_id, user_id) for user_id, amount in
+                                 participants_to_update.items()]
+                self._connector.execute(update_query, update_params)
 
     @staticmethod
     def get_expense(expense_id: str, connector: Connector):
