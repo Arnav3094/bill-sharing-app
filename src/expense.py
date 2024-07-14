@@ -7,7 +7,8 @@ from typing import List, Dict
 
 
 class Expense:
-    def __init__(self, amount: float, payer: User, group: Group, participants: Dict[User, float], expense_id: str = None,
+    def __init__(self, amount: float = None, payer: User = None, group: Group = None,
+                 participants: Dict[User, float] = None, expense_id: str = None,
                  tag: str = None,
                  connector: Connector = None, description: str = None, password: str = "", filepath: str = "",
                  user: str = "root", host: str = "localhost", port: str = "3306", database: str = "bill_sharing_app"):
@@ -48,26 +49,37 @@ class Expense:
             participant_ids = self._connector.execute(get_participant_ids_query, params = (expense_id,))
             self._participants = User.get_users(participant_ids, self._connector)
 
-            if self._amount != amount:
+            if amount and self._amount != amount:
                 raise ValueError(
                     f"ERROR[Expense.__init__]: Amount provided does not match the amount in the database for expense_id {expense_id}")
-            if self._payer != payer:
+            if payer and self._payer != payer:
                 raise ValueError(
                     f"ERROR[Expense.__init__]: Payer provided does not match the payer in the database for expense_id {expense_id}")
-            if self._group != group:
+            if group and self._group != group:
                 raise ValueError(
                     f"ERROR[Expense.__init__]: Group provided does not match the group in the database for expense_id {expense_id}")
-            if self._tag != tag:
+            if tag and self._tag != tag:
                 raise ValueError(
                     f"ERROR[Expense.__init__]: Tag provided does not match the tag in the database for expense_id {expense_id}")
-            if self._description != description:
+            if description and self._description != description:
                 raise ValueError(
                     f"ERROR[Expense.__init__]: Description provided does not match the description in the database for expense_id {expense_id}")
-            if self._participants != participants:
+            if participants and self._participants != participants:
                 raise ValueError(
                     f"ERROR[Expense.__init__]: Participants provided do not match the participants in the database for expense_id {expense_id}")
 
         else:
+            if not amount:
+                raise ValueError("ERROR[Expense.__init__]: Amount cannot be empty.")
+            if not payer:
+                raise ValueError("ERROR[Expense.__init__]: Payer cannot be empty.")
+            if not group:
+                raise ValueError("ERROR[Expense.__init__]: Group cannot be empty.")
+            if not participants or len(participants) == 0:
+                raise ValueError("ERROR[Expense.__init__]: Participants cannot be empty.")
+            if payer not in participants:
+                raise ValueError(
+                    "ERROR[Expense.__init__]: Payer not in participants. Please include the payer in the split.")
             self._expense_id = f"E{str(uuid4())}"
             self._description = description
             if amount <= 0:
@@ -85,21 +97,21 @@ class Expense:
             if description and tag:
                 insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, description, timestamp, paid_by, amount, tag) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                 insert_expense_params = (
-                self._expense_id, self._group.group_id, self._description, self._timestamp, self._payer.user_id,
-                self._amount, tag)
+                    self._expense_id, self._group.group_id, self._description, self._timestamp, self._payer.user_id,
+                    self._amount, tag)
             elif description:
                 insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, description, timestamp, paid_by, amount) VALUES (%s, %s, %s, %s, %s, %s)"
                 insert_expense_params = (
-                self._expense_id, self._group.group_id, self._description, self._timestamp, self._payer.user_id,
-                self._amount)
+                    self._expense_id, self._group.group_id, self._description, self._timestamp, self._payer.user_id,
+                    self._amount)
             elif tag:
                 insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, timestamp, paid_by, amount, tag) VALUES (%s, %s, %s, %s, %s, %s)"
                 insert_expense_params = (
-                self._expense_id, self._group.group_id, self._timestamp, self._payer.user_id, self._amount, tag)
+                    self._expense_id, self._group.group_id, self._timestamp, self._payer.user_id, self._amount, tag)
             else:
                 insert_expense_query = "INSERT INTO Expenses (expense_id, group_id, timestamp, paid_by, amount) VALUES (%s, %s, %s, %s, %s)"
                 insert_expense_params = (
-                self._expense_id, self._group.group_id, self._timestamp, self._payer.user_id, self._amount)
+                    self._expense_id, self._group.group_id, self._timestamp, self._payer.user_id, self._amount)
 
             self._connector.execute(insert_expense_query, insert_expense_params)
             insert_participants_query = "INSERT INTO ExpenseParticipants (expense_id, user_id, amount, settled) VALUES (%s, %s, %s, %s)"
