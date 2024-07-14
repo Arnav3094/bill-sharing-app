@@ -223,7 +223,8 @@ class Expense:
         expense_participants_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s"
         self._connector.execute(expense_participants_query, (self.expense_id,))
 
-    def edit_expense(self, amount: float = None, payer: User = None, tag: str = None, participants: Dict[User, float] = None, description: str = None):
+    def edit_expense(self, amount: float = None, payer: User = None, tag: str = None,
+                     participants: Dict[User, float] = None, description: str = None):
         """
         Edit the amount, payer, tag, description, and participants of the expense.
         :param participants: Dictionary mapping User to the amount the user owes.
@@ -235,10 +236,12 @@ class Expense:
         """
 
         if payer and not participants:
-            raise ValueError("ERROR[Expense.edit_expense]: Payer changed but split not changed. Please provide the new split.")
+            raise ValueError(
+                "ERROR[Expense.edit_expense]: Payer changed but split not changed. Please provide the new split.")
 
         if payer and participants and payer not in participants:
-            raise ValueError("ERROR[Expense.edit_expense]: Payer not in participants. Please include the payer in the split.")
+            raise ValueError(
+                "ERROR[Expense.edit_expense]: Payer not in participants. Please include the payer in the split.")
 
         if participants and sum(participants.values()) != self.amount:
             raise ValueError("ERROR[Expense.edit_expense]: Sum of split amounts does not match the expense amount.")
