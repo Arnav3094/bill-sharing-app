@@ -317,6 +317,19 @@ class Expense:
         return Expense(expense_id=expense_id, connector=connector)
 
     @staticmethod
+    def get_expenses(self, expense_ids: List[str]):
+        """
+        Retrieves multiple expenses from the database and returns a list of Expense objects by handing the expense ids to the constructor
+        :param expense_ids: The IDs of the expenses.
+        :return: List of Expense objects
+        """
+        expenses_exist_query = "SELECT expense_id FROM Expenses WHERE expense_id IN %s"
+        expenses_exist = self._connector.execute(expenses_exist_query, (tuple(expense_ids),))
+        if len(expenses_exist) != len(expense_ids):
+            raise ValueError("One or more expense IDs not found.")
+        return [Expense(expense_id=expense_id, connector=self._connector) for expense_id in expense_ids]
+
+    @staticmethod
     def get_expenses(group_id: str, connector: Connector):
         """
         Retrieves all expenses associated with a group from the database.
