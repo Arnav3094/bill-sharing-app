@@ -107,14 +107,7 @@ class Expense:
                 self._connector.execute(insert_participants_query, (self._expense_id, user.user_id, amount, 'NO'))
 
     def __repr__(self):
-        """
-        Returns a string representation of the Expense object.
-
-        Returns:
-            str: String representation of the Expense object.
-        """
-        return (f"Expense(expense_id={self.expense_id}, description={self.description}, amount={self.amount},"
-                f"payer={self.payer}, group={self.group}, timestamp={self.timestamp})")
+        return f"Expense(expense_id = {self.expense_id}, amount = {self.amount}, payer = {self.payer}, group = {self.group}, timestamp = {self.timestamp}, description = {self.description}, tag = {self.tag})"
 
     @property
     def expense_id(self):
