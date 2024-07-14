@@ -111,74 +111,99 @@ class Expense:
 
     @property
     def expense_id(self):
-        """
-        Gets the expense ID.
-
-        Returns:
-            str: The expense ID.
-        """
         return self._expense_id
+
+    @expense_id.setter
+    def expense_id(self, expense_id: str):
+        """
+        Raises an AttributeError if the expense_id is attempted to be changed directly.
+        This is to ensure that the expense_id is not changed.
+        """
+        raise AttributeError("Expense ID cannot be changed.")
 
     @property
     def description(self):
-        """
-        Gets the description of the expense.
-
-        Returns:
-            str: The description of the expense.
-        """
         return self._description
+
+    @description.setter
+    def description(self, description: str):
+        """
+        Raises an AttributeError if the description is attempted to be changed directly.
+        This is to ensure that the description is updated in the database when the edit_expense() method is called.
+        """
+        raise AttributeError("Description cannot be changed directly. Use edit_expense() instead.")
 
     @property
     def amount(self):
-        """
-        Gets the amount of the expense.
-
-        Returns:
-            float: The amount of the expense.
-        """
         return self._amount
+
+    @amount.setter
+    def amount(self, amount: float):
+        """
+        Raises an AttributeError if the amount is attempted to be changed directly.
+        This is to ensure that the amount is updated in the database when the edit_expense() method is called.
+        """
+        raise AttributeError("Amount cannot be changed directly. Use edit_expense() instead.")
 
     @property
     def payer(self):
-        """
-        Gets the user who paid for the expense.
-
-        Returns:
-            User: The user who paid for the expense.
-        """
         return self._payer
+
+    @payer.setter
+    def payer(self, payer: User):
+        """
+        Raises an AttributeError if the payer is attempted to be changed directly.
+        This is to ensure that the payer is updated in the database when the edit_expense() method is called.
+        """
+        raise AttributeError("Payer cannot be changed directly. Use edit_expense() instead.")
 
     @property
     def group(self):
-        """
-        Gets the group to which the expense belongs.
-
-        Returns:
-            Group: The group to which the expense belongs.
-        """
         return self._group
+
+    @group.setter
+    def group(self, group: Group):
+        """
+        Raises an AttributeError if the group is attempted to be changed directly.
+        This is to ensure that the group is updated in the database when the edit_expense() method is called.
+        """
+        raise AttributeError("Group cannot be changed. Delete the expense and create a new one instead.")
 
     @property
     def timestamp(self):
-        """
-        Gets the timestamp of the expense.
-
-        Returns:
-            datetime: The timestamp of the expense.
-        """
         return self._timestamp
 
-    def add_expense(self):
+    @timestamp.setter
+    def timestamp(self, timestamp: datetime):
         """
-        Adds the expense to the database.
+        Raises an AttributeError if the timestamp is attempted to be changed directly.
+        This is to ensure that the timestamp is not changed.
+        """
+        raise AttributeError("Timestamp cannot be changed.")
 
-        Returns:
-            None
+    @property
+    def tag(self):
+        return self._tag
+
+    @tag.setter
+    def tag(self, tag: str):
         """
-        query = "INSERT INTO Expenses (expense_id, group_id, description, timestamp, paid_by, amount) VALUES (%s, %s, %s, %s, %s, %s)"
-        params = (self.expense_id, self.group.group_id, self.description, self.timestamp, self.payer.user_id, self.amount)
-        self._connector.execute(query, params)
+        Raises an AttributeError if the tag is attempted to be changed directly.
+        This is to ensure that the tag is updated in the database when the edit_expense() method is called.
+        """
+        raise AttributeError("Tag cannot be changed directly. Use edit_expense() instead.")
+
+    @property
+    def participants(self):
+        return self._participants
+
+    @participants.setter
+    def participants(self, participants: Dict[User, float]):
+        """
+        Raises an AttributeError if the participants are attempted to be changed directly.
+        This is to ensure that the participants are updated in the database when the split methods are called.
+        """
+        raise AttributeError("Participants cannot be changed directly. Use split methods instead.")
 
     def delete_expense(self):
         """
