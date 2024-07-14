@@ -211,27 +211,68 @@ class Expense:
         expense_participants_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s"
         self._connector.execute(expense_participants_query, (self.expense_id,))
 
-        Returns:
-            None
+    def edit_expense(self, amount: float = None, payer: User = None, tag: str = None, participants: Dict[User, float] = None, description: str = None):
         """
-        query = "DELETE FROM Expenses WHERE expense_id = %s"
-        self._connector.execute(query, (self.expense_id,))
-
-    def edit_expense(self, description: str, amount: float):
+        Edit the amount, payer, tag, description, and participants of the expense.
+        :param participants: Dictionary mapping User to the amount the user owes.
+        :param tag: The tag the expense is marked with.
+        :param payer: The user who paid for the expense.
+        :param description: The description of the expense.
+        :param amount: The amount of the expense.
+        :return: None
         """
-        Edits the description and amount of the expense.
 
-        Args:
-            description (str): The new description of the expense.
-            amount (float): The new amount of the expense.
+        if payer and not participants:
+            raise ValueError("ERROR[Expense.edit_expense]: Payer changed but split not changed. Please provide the new split.")
 
-        Returns:
-            None
-        """
-        self._description = description
-        self._amount = amount
-        query = "UPDATE Expenses SET description = %s, amount = %s WHERE expense_id = %s"
-        self._connector.execute(query, (self.description, self.amount, self.expense_id))
+        if payer and participants and payer not in participants:
+            raise ValueError("ERROR[Expense.edit_expense]: Payer not in participants. Please include the payer in the split.")
+
+        if participants and sum(participants.values()) != self.amount:
+            raise ValueError("ERROR[Expense.edit_expense]: Sum of split amounts does not match the expense amount.")
+
+        if payer and participants and participants[payer] == self.participants[payer]:
+            raise ValueError("ERROR[Expense.edit_expense]: Payer amount not changed. Please provide the new split.")
+
+        update_fields = []
+        update_params = []
+
+        if amount is not None and amount != self.amount:
+            update_fields.append("amount = %s")
+            update_params.append(amount)
+            self._amount = amount
+
+        if payer is not None and payer != self.payer:
+            update_fields.append("paid_by = %s")
+            update_params.append(payer.user_id)
+            self._payer = payer
+
+        if tag is not None and tag != self.tag:
+            update_fields.append("tag = %s")
+            update_params.append(tag)
+            self._tag = tag
+
+        if description is not None and description != self.description:
+            update_fields.append("description = %s")
+            update_params.append(description)
+            self._description = description
+
+        if participants:
+            current_participants = self.participants
+            new_participant_ids = set(participants.keys())
+            existing_participant_ids = set(current_participants.keys())
+            participant_ids_to_delete = existing_participant_ids - new_participant_ids
+            if participant_ids_to_delete:
+                delete_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s AND user_id = %s"
+                delete_params = [(self.expense_id, user_id) for user_id in participant_ids_to_delete]
+            participants_to_insert = {user.user_id: amount for user, amount in participants.items() if user.user_id not in existing_participant_ids}
+            if participants_to_insert:
+                insert_query = "INSERT INTO ExpenseParticipants (expense_id, user_id, amount, settled) VALUES (%s, %s, %s, %s)"
+                insert_params = [(self.expense_id, user_id, amount, 'NO') for user_id, amount in participants_to_insert.items()]
+            participants_to_update = {user.user_id: amount for user, amount in participants.items() if user.user_id in existing_participant_ids and amount != current_participants[user.user_id]}
+            if participants_to_update:
+                update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
+                update_params = [(amount, self.expense_id, user_id) for user_id, amount in participants_to_update.items()]
 
     @staticmethod
     def get_expense(expense_id: str, connector: Connector):
