@@ -117,13 +117,14 @@ class Transaction:
 
         transaction_ids = user.connector.execute(query, tuple(params))
         return [Transaction.get_transaction(t['trans_id'], user.connector) for t in transaction_ids]
-
-    def __repr__(self):
-        return (f"Transaction(trans_id={self.trans_id}, expense={self.expense.description}, "
-                f"payer={self.payer.name}, payee={self.payee.name}, amount={self.amount}, "
-                f"timestamp={self.timestamp})")
-
+        
+        
     def __str__(self):
         return (f"Transaction: {self.payer.name} paid {self.payee.name} "
                 f"${self.amount:.2f} for '{self.expense.description}' "
                 f"on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    def __repr__(self):
+        return (f"Transaction(trans_id={self.trans_id}, expense={self.expense.description}, "
+                f"payer={self.payer.name}, payee={self.payee.name}, amount={self.amount}, "
+                f"timestamp={self.timestamp})")
