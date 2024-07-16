@@ -313,7 +313,7 @@ class Expense:
         query = "SELECT * FROM Expenses WHERE expense_id = %s"
         expense_exists = connector.execute(query, (expense_id,), fetchall=False)
         if not expense_exists:
-            raise ValueError(f"Expense with ID {expense_id} not found.")
+            raise ValueError(f"Error[Expense.get_expense] : Expense with ID {expense_id} not found.")
         return Expense(expense_id=expense_id, connector=connector)
 
     @staticmethod
@@ -327,7 +327,7 @@ class Expense:
         expenses_exist_query = "SELECT expense_id FROM Expenses WHERE expense_id IN %s"
         expenses_exist = connector.execute(expenses_exist_query, (tuple(expense_ids),))
         if len(expenses_exist) != len(expense_ids):
-            raise ValueError("One or more expense IDs not found.")
+            raise ValueError("Error[Expense.get_expenses]: One or more expense IDs not found.")
         return [Expense(expense_id=expense_id, connector=connector) for expense_id in expense_ids]
 
     @staticmethod
@@ -335,3 +335,59 @@ class Expense:
         query = "SELECT * FROM Expenses WHERE group_id = %s"
         expenses = connector.execute(query, (group_id,))
         return [Expense(expense_id=expense['expense_id'], connector=connector) for expense in expenses]
+    
+    
+    def calculate_and_split_expense(self, method: str, participants: List[User], amounts: List[float] = None, percentages: List[float] = None):
+        """
+        Calculates how to split the expense based on the specified method and calls split_expense.
+
+        :param method: The method to use for splitting the expense. Can be 'equal', 'unequal', or 'percentages'.
+        :param participants: The list of participants.
+        :param amounts: The list of amounts each participant owes (required for 'unequal' method).
+        :param percentages: The list of percentages each participant owes (required for 'percentages' method).
+        """
+        if method == 'equal':
+            split_amount = self._amount
+            individual_amount = split_amount / len(participants)
+            split_dict = {participant: individual_amount for participant in participants}
+        elif method == 'unequal':
+            if not amounts or len(amounts) != len(participants):
+                raise ValueError("Error[Expense.calculate & split_expense] : Amounts must be provided and match the number of participants for 'unequal' method.")
+            split_amount = sum(amounts)
+            if split_amount != self._amount:
+                raise ValueError("rror[Expense.calculate & split_expense] :The sum of amounts provided must be equal to the total split amount.")
+            split_dict = {participant: amount for participant, amount in zip(participants, amounts)}
+        elif method == 'percentages':
+            if not percentages or len(percentages) != len(participants):
+                raise ValueError("rror[Expense.calculate & split_expense] :Percentages must be provided and match the number of participants for 'percentages' method.")
+            split_amount = self._amount
+            split_dict = {participant: split_amount * (percentage / 100) for participant, percentage in zip(participants, percentages)}
+        else:
+            raise ValueError("rror[Expense.calculate & split_expense] : Invalid method specified. Use 'equal', 'unequal', or 'percentages'.")
+
+        self.split_expense(split_amount, split_dict)
+        
+
+    def split_expense(self, split_amount: float, participants: Dict[User, float]):
+        """
+        Splits the expense amount among the given participants.
+
+        :param split_amount: The total amount to be split among the participants.
+        :param participants: A dictionary mapping each participant (User) to their respective amount.
+        """
+        total_split_amount = sum(participants.values())
+        if total_split_amount != split_amount:
+            raise ValueError("Error[Expense.split_expense]: Total split amount does not match the provided split amount.")
+
+        self._amount = split_amount
+        self._participants = participants
+
+        update_expense_query = "UPDATE Expenses SET amount = %s WHERE expense_id = %s"
+        self._connector.execute(update_expense_query, (self._amount, self._expense_id))
+
+        delete_old_participants_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s"
+        self._connector.execute(delete_old_participants_query, (self._expense_id,))
+
+        insert_new_participants_query = "INSERT INTO ExpenseParticipants (expense_id, user_id, amount, settled) VALUES (%s, %s, %s, %s)"
+        for user, amount in participants.items():
+            self._connector.execute(insert_new_participants_query, (self._expense_id, user.user_id, amount, 'NO'))
