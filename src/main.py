@@ -98,7 +98,7 @@ class BillSharingApp:
         try:
             group = Group(admin=self.current_user, name=name,members=[self.current_user], description=description, connector=self.connector)
             print(f"Group '{group.name}' created successfully with ID: {group.group_id}")
-            
+            group.add_member(self.current_user.user_id)
 
         except ValueError as e:
             print(f"Group creation failed: {e}")
@@ -117,7 +117,8 @@ class BillSharingApp:
             print(f"ID: {group.group_id}, Name: {group.name}")
 
     def manage_group(self):
-        group_id = input("Enter the ID of the group you want to manage: ")
+        group_id=input("entr the id of thr group you want to manage: ")
+
         try:
             group = Group.get_group(group_id, self.connector)
             if group.admin.user_id != self.current_user.user_id:
@@ -131,47 +132,74 @@ class BillSharingApp:
         while True:
             print(f"\nManaging group: {group.name}")
             print("1. Add member")
-            print("2. Remove member")
-            print("3. Change group name")
-            print("4. Change group description")
-            print("5. View members")
-            print("6. Back to main menu")
+            print("2. Add members")
+            print("3. Remove member")
+            print("4. Change group name")
+            print("5. Change group description")
+            print("6. View members")
+            
+            print("7. Back to main menu")
             choice = input("Enter your choice: ")
 
             if choice == '1':
                 self.add_member_to_group(group)
             elif choice == '2':
-                self.remove_member_from_group(group)
+                self.add_multiple_members_to_group(group)
             elif choice == '3':
-                self.change_group_name(group)
+                self.remove_member_from_group(group)
             elif choice == '4':
-                self.change_group_description(group)
+                self.change_group_name(group) 
             elif choice == '5':
-                self.view_group_members(group)
+                self.change_group_description(group)
             elif choice == '6':
+                self.view_group_members(group)
+            elif choice == '7':
                 break
             else:
                 print("Invalid choice. Please try again.")
 
-    def add_member_to_group(self, group):
+    def add_member_to_group(self, group:Group):
         email = input("Enter the email of the user you want to add: ")
         try:
-            user = User.login(email, "", self.connector)  # Using login method to retrieve user
+            user = User.get_user_by_email(email, self.connector)  # Using
             group.add_member(user.user_id)
             print(f"{user.name} has been added to the group.")
         except ValueError as e:
             print(f"Failed to add member: {e}")
 
-    def remove_member_from_group(self, group):
+    def add_multiple_members_to_group(self,group:Group):
+        group_id = input("Enter the ID of the group you want to add members to: ")
+        
+
+        emails = input("Enter the emails of the users you want to add (comma-separated): ").split(',')
+        emails = [email.strip() for email in emails]  # Remove any whitespace
+
+        user_ids = []
+        for email in emails:
+            try:
+                user = User.get_user_by_email(email, self.connector) # Using login method to retrieve user
+                user_ids.append(user.user_id)
+            except ValueError as e:
+                print(f"Failed to find user with email {email}: {e}")
+
+        if user_ids:
+            group.add_members(user_ids)
+            print(f"Successfully added {len(user_ids)} members to the group.")
+        else:
+            print("No valid users to add.")
+
+   
+
+    def remove_member_from_group(self, group:Group):
         email = input("Enter the email of the user you want to remove: ")
         try:
-            user = User.login(email, "", self.connector)  # Using login method to retrieve user
+            user = User.get_user_by_email(email, self.connector)
             group.remove_member(user.user_id)
             print(f"{user.name} has been removed from the group.")
         except ValueError as e:
             print(f"Failed to remove member: {e}")
 
-    def change_group_name(self, group):
+    def change_group_name(self, group:Group):
         new_name = input("Enter the new name for the group: ")
         try:
             group.name = new_name
@@ -179,7 +207,7 @@ class BillSharingApp:
         except ValueError as e:
             print(f"Failed to change group name: {e}")
 
-    def change_group_description(self, group):
+    def change_group_description(self, group:Group):
         new_description = input("Enter the new description for the group: ")
         try:
             group.description = new_description
@@ -187,7 +215,7 @@ class BillSharingApp:
         except ValueError as e:
             print(f"Failed to change group description: {e}")
 
-    def view_group_members(self, group):
+    def view_group_members(self, group:Group):
         print(f"Members of group '{group.name}':")
         for member in group.members:
             print(f"- {member.name} (Email: {member.email})")
@@ -401,6 +429,7 @@ class BillSharingApp:
             print("Transaction deleted successfully.")
         except ValueError as e:
             print(f"Failed to delete transaction: {e}")
+    
 
 if __name__ == "__main__":
     app = BillSharingApp()
