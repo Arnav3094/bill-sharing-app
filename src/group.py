@@ -314,9 +314,9 @@ class Group:
         delete_member_query = 'DELETE FROM GroupMembers WHERE group_id = %s AND user_id = %s'
         params = (self.group_id, user_id)
         self.connector.execute(delete_member_query, params)
-        user=User.get_user(user_id,self.connector)
         
-        self.members.remove(user)
+        # Remove the user from self.members based on user_id
+        self._members = [member for member in self._members if member.user_id != user_id]
 
     def remove_members(self, user_ids: List[str]):
         # verify whether user_ids exist in the database

@@ -231,10 +231,28 @@ class Expense:
         raise AttributeError("Participants cannot be changed directly. Use split methods instead.")
 
     def delete_expense(self):
-        expense_query = "DELETE FROM Expenses WHERE expense_id = %s"
-        self._connector.execute(expense_query, (self.expense_id,))
-        expense_participants_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s"
-        self._connector.execute(expense_participants_query, (self.expense_id,))
+        try:
+            # Start a transaction
+            self._connector.execute("START TRANSACTION")
+
+            # First, delete related records in ExpenseParticipants
+            expense_participants_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s"
+            self._connector.execute(expense_participants_query, (self.expense_id,))
+        
+            # Then, delete the expense record
+            expense_query = "DELETE FROM Expenses WHERE expense_id = %s"
+            self._connector.execute(expense_query, (self.expense_id,))
+
+            # Commit the transaction
+            self._connector.execute("COMMIT")
+
+            #4
+            # print(f"Expense {self.expense_id} and its related records have been successfully deleted.")
+        except Exception as e:
+            # If an error occurs, rollback the transaction
+            self._connector.execute("ROLLBACK")
+            print(f"An error occurred while deleting the expense: {e}")
+            raise
 
     def edit_expense(self, amount: float = None, payer: User = None,
                       tag: str = None, participants: Dict[User, float] = None, 

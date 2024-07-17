@@ -246,26 +246,29 @@ class BillSharingApp:
             else:
                 print("Invalid choice. Please try again.")
 
+    
+
+
     def add_expense(self):
         group_id = input("Enter the group ID for this expense: ")
         try:
             group = Group.get_group(group_id, self.connector)
-            amount = float(input("Enter the expense amount: "))
+            amount = float(input("Enter the total expense amount: "))
             description = input("Enter a description for the expense: ")
             tag = input("Enter a tag for the expense (optional): ")
             
             participants = {}
-            for member in group.members:
-                amount_owed = float(input(f"Enter amount owed by {member.name} (0 if not participating): "))
-                if amount_owed > 0:
-                    participants[member] = amount_owed
-
+            participants[self.current_user] = amount
+            
             expense = Expense(amount=amount, payer=self.current_user, group=group,
                               participants=participants, description=description,
                               tag=tag, connector=self.connector)
             print(f"Expense added successfully with ID: {expense.expense_id}")
         except ValueError as e:
             print(f"Failed to add expense: {e}")
+
+    
+
 
     def edit_expense(self):
         expense_id = input("Enter the ID of the expense you want to edit: ")
@@ -292,11 +295,14 @@ class BillSharingApp:
         try:
             expense = Expense.get_expense(expense_id, self.connector)
             expense.delete_expense()
-            print("Expense deleted successfully.")
+            print(f"Expense {expense_id} has been successfully deleted.")
         except ValueError as e:
             print(f"Failed to delete expense: {e}")
+        except Exception as e:
+            print(f"An error occurred while deleting the expense: {e}")
 
     def view_expenses(self):
+
         group_id = input("Enter the group ID to view expenses (press enter to view all): ")
         try:
             if group_id:
