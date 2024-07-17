@@ -62,21 +62,21 @@ class Expense:
                 if amount and self._amount != amount:
                     raise ValueError(
                         f"ERROR[Expense.__init__]: Amount provided does not match the amount in the database for expense_id {expense_id}")
-                if payer and self._payer != payer:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Payer provided does not match the payer in the database for expense_id {expense_id}")
+                '''if payer:
+                    if self._payer != payer:
+                        raise ValueError(f"ERROR[Expense.__init__]: Payer provided does not match the payer in the database for expense_id {expense_id}")
                 if group and self._group != group:
                     raise ValueError(
                         f"ERROR[Expense.__init__]: Group provided does not match the group in the database for expense_id {expense_id}")
                 if tag and self._tag != tag:
                     raise ValueError(
-                        f"ERROR[Expense.__init__]: Tag provided does not match the tag in the database for expense_id {expense_id}")
+                        f"ERROR[Expense.__init__]: Tag provided does not match the tag in the database for expense_id {expense_id}")'''
                 if description and self._description != description:
                     raise ValueError(
                         f"ERROR[Expense.__init__]: Description provided does not match the description in the database for expense_id {expense_id}")
-                if participants and self._participants != participants:
+                '''if participants and self._participants != participants:
                     raise ValueError(
-                        f"ERROR[Expense.__init__]: Participants provided do not match the participants in the database for expense_id {expense_id}")
+                        f"ERROR[Expense.__init__]: Participants provided do not match the participants in the database for expense_id {expense_id}")'''
             else:
                 raise ValueError(f"No expense found with id {expense_id}")
         
@@ -326,19 +326,6 @@ class Expense:
                                  participants_to_update.items()]
                 self._connector.execute(update_query, update_params)
                
-        # Adjust amounts for payer
-        payer_adjustment_query = """
-        UPDATE ExpenseParticipants
-        SET amount = CASE
-            WHEN user_id = %s THEN %s
-            ELSE amount
-        END
-        WHERE expense_id = %s
-        """
-        payer_amount = -sum(amount for user, amount in self._participants.items() if user != self._payer)
-        self._connector.execute(payer_adjustment_query, (self._payer.user_id, payer_amount, self.expense_id))
-        self._participants[self._payer] = payer_amount
-
     @staticmethod
     def get_expense(expense_id: str, connector: Connector):
         """
