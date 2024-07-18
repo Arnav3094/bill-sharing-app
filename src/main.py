@@ -73,7 +73,8 @@ class BillSharingApp:
         print("3. Manage a group")
         print("4. Manage expenses")
         print("5. Manage transactions")
-        print("6. Logout")
+        print("6. View dues")
+        print("7. Logout")
         choice = input("Enter your choice: ")
 
         if choice == '1':
@@ -87,6 +88,8 @@ class BillSharingApp:
         elif choice == '5':
             self.manage_transactions()
         elif choice == '6':
+            self.view_dues()
+        elif choice == '7':
             self.current_user = None
             print("Logged out successfully.")
         else:
@@ -517,6 +520,29 @@ class BillSharingApp:
             print("Transaction deleted successfully.")
         except ValueError as e:
             print(f"Failed to delete transaction: {e}")
+
+    def view_dues(self):
+        print("\nYour current dues:")
+        query = """
+        SELECT e.expense_id, e.description, e.amount, ep.amount as owed_amount, g.name as group_name
+        FROM Expenses e
+        JOIN ExpenseParticipants ep ON e.expense_id = ep.expense_id
+        JOIN GroupDetails g ON e.group_id = g.group_id
+        WHERE ep.user_id = %s AND ep.settled != 'SETTLED'
+        """
+        dues = self.connector.execute(query, (self.current_user.user_id,))
+        
+        if not dues:
+            print("You don't have any outstanding dues.")
+        else:
+            for due in dues:
+                print(f"Expense ID: {due['expense_id']}")
+                print(f"Description: {due['description']}")
+                print(f"Total Amount: ${due['amount']:.2f}")
+                print(f"You Owe: ${due['owed_amount']:.2f}")
+                print(f"Group: {due['group_name']}")
+                print("---")
+
     
 
 if __name__ == "__main__":
