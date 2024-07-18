@@ -359,14 +359,22 @@ class BillSharingApp:
                 elif split_method == '2':
                     amounts = []
                     for participant in participants:
-                        amount = float(input(f"Enter amount for {participant.name}: "))
-                        amounts.append(amount)
+                        if participant.user_id == self.current_user.user_id:
+                            amount = float(input(f"Enter your share amount: "))
+                            amounts.append(amount)
+                        else:
+                            amount = float(input(f"Enter  share amount for {participant.name}: "))
+                            amounts.append(amount)
                     expense.calculate_and_split_expense('unequal', participants, amounts=amounts)
                 elif split_method == '3':
                     percentages = []
                     for participant in participants:
-                        percentage = float(input(f"Enter percentage for {participant.name}: "))
-                        percentages.append(percentage)
+                        if participant.user_id == self.current_user.user_id:
+                            amount = float(input(f"Enter your share percentage: "))
+                            amounts.append(amount)
+                        else:
+                            amount = float(input(f"Enter share percentage for {participant.name}: "))
+                            amounts.append(amount)
                     expense.calculate_and_split_expense('percentages', participants, percentages=percentages)
                 else:
                     print("Invalid choice. Split cancelled.")
@@ -440,7 +448,7 @@ class BillSharingApp:
                     print("You don't owe any money for this expense.")
                     return
 
-                print(f"You owe ${amount_owed:.2f} for this expense.")
+                print(f"You owe {amount_owed:.2f} for this expense.")
                 amount = float(input("Enter the amount you want to pay (must be less than or equal to the amount owed): "))
 
                 if amount > amount_owed:
