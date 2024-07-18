@@ -268,19 +268,6 @@ class Expense:
         :return: None
         """
  
-        if payer and not participants:
-            raise ValueError(
-                "ERROR[Expense.edit_expense]: Payer changed but split not changed. Please provide the new split.")
- 
-        if payer and participants and payer not in participants:
-            raise ValueError(
-                "ERROR[Expense.edit_expense]: Payer not in participants. Please include the payer in the split.")
- 
-        if participants and sum(participants.values()) != self.amount:
-            raise ValueError("ERROR[Expense.edit_expense]: Sum of split amounts does not match the expense amount.")
- 
-        if payer and participants and participants[payer] == self.participants[payer]:
-            raise ValueError("ERROR[Expense.edit_expense]: Payer amount not changed. Please provide the new split.")
  
         update_fields = []
         update_params = []
@@ -305,6 +292,20 @@ class Expense:
             update_params.append(description)
             self._description = description
  
+        if payer and not participants:
+            raise ValueError(
+                "ERROR[Expense.edit_expense]: Payer changed but split not changed. Please provide the new split.")
+ 
+        if payer and participants and payer not in participants:
+            raise ValueError(
+                "ERROR[Expense.edit_expense]: Payer not in participants. Please include the payer in the split.")
+ 
+        if participants and sum(participants.values()) != self.amount:
+            raise ValueError("ERROR[Expense.edit_expense]: Sum of split amounts does not match the expense amount.")
+ 
+        if payer and participants and participants[payer] == self.participants[payer]:
+            raise ValueError("ERROR[Expense.edit_expense]: Payer amount not changed. Please provide the new split.")
+        
         if update_fields:
             update_query = f"UPDATE Expenses SET {', '.join(update_fields)} WHERE expense_id = %s"
             update_params.append(self.expense_id)

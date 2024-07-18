@@ -121,7 +121,7 @@ class Transaction:
         
     def __str__(self):
         return (f"Transaction: {self.payer.name} paid {self.payee.name} "
-                f"${self.amount:.2f} for '{self.expense.description}' "
+                f"{self.amount:.2f} for '{self.expense.description}' with Transaction ID {self.trans_id} "
                 f"on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
     
     def __repr__(self):
