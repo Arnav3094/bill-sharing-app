@@ -69,24 +69,24 @@ class BillSharingApp:
         print(f"\nHello, {self.current_user.name}!")
         print("1. Create a new group")
         #print("2. Join a group")
-        print("3. View my groups")
-        print("4. Manage a group")
-        print("5. Manage expenses")
-        print("6. Manage transactions")
-        print("7. Logout")
+        print("2. View my groups")
+        print("3. Manage a group")
+        print("4. Manage expenses")
+        print("5. Manage transactions")
+        print("6. Logout")
         choice = input("Enter your choice: ")
 
         if choice == '1':
             self.create_group()
-        elif choice == '3':
+        elif choice == '2':
             self.view_groups()
-        elif choice == '4':
+        elif choice == '3':
             self.manage_group()
-        elif choice == '5':
+        elif choice == '4':
             self.manage_expenses()
-        elif choice == '6':
+        elif choice == '5':
             self.manage_transactions()
-        elif choice == '7':
+        elif choice == '6':
             self.current_user = None
             print("Logged out successfully.")
         else:
