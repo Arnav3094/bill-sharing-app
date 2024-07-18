@@ -326,21 +326,21 @@ class Expense:
             participant_ids_to_delete = existing_participant_ids - new_participant_ids
             if participant_ids_to_delete:
                 delete_query = "DELETE FROM ExpenseParticipants WHERE expense_id = %s AND user_id = %s"
-                delete_params = [(self.expense_id, user_id) for user_id in participant_ids_to_delete]
+                delete_params = [(self.expense_id, user.user_id) for user in participant_ids_to_delete]
                 self._connector.execute(delete_query, delete_params)
             # Insert new participants
-            participants_to_insert = {user.user_id: amount for user, amount in participants.items() if
-                                      user.user_id not in existing_participant_ids}
+            participants_to_insert = {user: amount for user, amount in participants.items() if
+                                      user not in existing_participant_ids}
             if participants_to_insert:
                 insert_query = "INSERT INTO ExpenseParticipants (expense_id, user_id, amount, settled) VALUES (%s, %s, %s, %s)"
-                insert_params = [(self.expense_id, user_id, amount, 'NO') for user_id, amount in participants_to_insert.items()]
+                insert_params = [(self.expense_id, user.user_id, amount, 'NO') for user, amount in participants_to_insert.items()]
                 self._connector.execute(insert_query, insert_params)
             # Update existing participants
-            participants_to_update = {user.user_id: amount for user, amount in participants.items() if
-                                      user.user_id in existing_participant_ids and amount != current_participants[user.user_id]}
+            participants_to_update = {user: amount for user, amount in participants.items() if
+                                      user in existing_participant_ids and amount != current_participants[user]}
             if participants_to_update:
                 update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
-                update_params = [(amount, self.expense_id, user_id) for user_id, amount in
+                update_params = [(amount, self.expense_id, user.user_id) for user, amount in
                                  participants_to_update.items()]
                 self._connector.execute(update_query, update_params)
                
@@ -425,15 +425,15 @@ class Expense:
                 raise ValueError("Error[Expense.calculate & split_expense] : Amounts must be provided and match the number of participants for 'unequal' method.")
             split_amount = sum(amounts)
             if split_amount != self._amount:
-                raise ValueError("rror[Expense.calculate & split_expense] :The sum of amounts provided must be equal to the total split amount.")
+                raise ValueError("Error[Expense.calculate & split_expense] :The sum of amounts provided must be equal to the total split amount.")
             split_dict = {participant: amount for participant, amount in zip(participants, amounts)}
         elif method == 'percentages':
             if not percentages or len(percentages) != len(participants):
-                raise ValueError("rror[Expense.calculate & split_expense] :Percentages must be provided and match the number of participants for 'percentages' method.")
+                raise ValueError("Error[Expense.calculate & split_expense] :Percentages must be provided and match the number of participants for 'percentages' method.")
             split_amount = self._amount
             split_dict = {participant: split_amount * (percentage / 100) for participant, percentage in zip(participants, percentages)}
         else:
-            raise ValueError("rror[Expense.calculate & split_expense] : Invalid method specified. Use 'equal', 'unequal', or 'percentages'.")
+            raise ValueError("Error[Expense.calculate & split_expense] : Invalid method specified. Use 'equal', 'unequal', or 'percentages'.")
 
         self.split_expense(split_amount, split_dict)
         
