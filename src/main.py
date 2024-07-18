@@ -343,45 +343,48 @@ class BillSharingApp:
         expense_id = input("Enter the ID of the expense you want to split: ")
         try:
             expense = Expense.get_expense(expense_id, self.connector)
-            print(f"Current expense details: {expense}")
-            
-            print("Choose split method:")
-            print("1. Equal")
-            print("2. Unequal")
-            print("3. Percentages")
-            split_method = input("Enter your choice (1/2/3): ")
-            
-            participants = list(expense.participants.keys())
-            
-            if split_method == '1':
-                expense.calculate_and_split_expense('equal', participants)
-            elif split_method == '2':
-                amounts = []
-                for participant in participants:
-                    amount = float(input(f"Enter amount for {participant.name}: "))
-                    amounts.append(amount)
-                expense.calculate_and_split_expense('unequal', participants, amounts=amounts)
-            elif split_method == '3':
-                percentages = []
-                for participant in participants:
-                    percentage = float(input(f"Enter percentage for {participant.name}: "))
-                    percentages.append(percentage)
-                expense.calculate_and_split_expense('percentages', participants, percentages=percentages)
+            if self.current_user.user_id == expense.payer.user_id:
+                print(f"Current expense details: {expense}")
+                
+                print("Choose split method:")
+                print("1. Equal")
+                print("2. Unequal")
+                print("3. Percentages")
+                split_method = input("Enter your choice (1/2/3): ")
+                
+                participants = list(expense.participants.keys())
+                
+                if split_method == '1':
+                    expense.calculate_and_split_expense('equal', participants)
+                elif split_method == '2':
+                    amounts = []
+                    for participant in participants:
+                        amount = float(input(f"Enter amount for {participant.name}: "))
+                        amounts.append(amount)
+                    expense.calculate_and_split_expense('unequal', participants, amounts=amounts)
+                elif split_method == '3':
+                    percentages = []
+                    for participant in participants:
+                        percentage = float(input(f"Enter percentage for {participant.name}: "))
+                        percentages.append(percentage)
+                    expense.calculate_and_split_expense('percentages', participants, percentages=percentages)
+                else:
+                    print("Invalid choice. Split cancelled.")
+                    return
+
+                # Mark the payer as settled in the ExpenseParticipants table
+                new_amount = 0.00
+                update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
+                self.connector.execute(update_query, (expense_id, expense.payer.user_id))
+                update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
+                self.connector.execute(update_query, (new_amount,expense_id, expense.payer.user_id))
+
+                print("Expense split successfully.")
+                print(f"\nSplit details for expense '{expense.description}':")
+                print(f"Total amount: {expense.amount:.2f}")
+                print(f"Payer: {expense.payer.name} (Settled)")
             else:
-                print("Invalid choice. Split cancelled.")
-                return
-
-            # Mark the payer as settled in the ExpenseParticipants table
-            new_amount = 0.00
-            update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
-            self.connector.execute(update_query, (expense_id, expense.payer.user_id))
-            update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
-            self.connector.execute(update_query, (new_amount,expense_id, expense.payer.user_id))
-
-            print("Expense split successfully.")
-            print(f"\nSplit details for expense '{expense.description}':")
-            print(f"Total amount: {expense.amount:.2f}")
-            print(f"Payer: {expense.payer.name} (Settled)")
+                print("Can't split expense. You are not the payer")
             
             
         except ValueError as e:
@@ -467,12 +470,15 @@ class BillSharingApp:
         expense_id = input("Enter the expense ID to view its transactions: ")
         try:
             expense = Expense.get_expense(expense_id, self.connector)
-            transactions = Transaction.get_transactions_for_expense(expense)
-            if not transactions:
-                print("No transactions found for this expense.")
+            if self.current_user.user_id == expense.payer.user_id:
+                transactions = Transaction.get_transactions_for_expense(expense)
+                if not transactions:
+                    print("No transactions found for this expense.")
+                else:
+                    for transaction in transactions:
+                        print(transaction)
             else:
-                for transaction in transactions:
-                    print(transaction)
+                print("Can't view transactions as you are not the payer")
         except ValueError as e:
             print(f"Failed to retrieve transactions: {e}")
 
