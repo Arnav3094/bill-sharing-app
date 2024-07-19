@@ -75,7 +75,7 @@ class TestExpense(unittest.TestCase):
             amount=100.0,
             payer=self.mock_user1,
             group=self.mock_group,
-            participants={self.mock_user1: -100.0, self.mock_user2: 100.0},
+            participants={self.mock_user1: 100.0, self.mock_user2:0},
             connector=self.mock_connector
         )
 
@@ -90,7 +90,7 @@ class TestExpense(unittest.TestCase):
             amount=150.0,
             payer=self.mock_user2,
             tag="Food",
-            participants={self.mock_user1: 50.0, self.mock_user2: -150.0, mock_user3: 100.0},
+            participants={self.mock_user1: 50.0, self.mock_user2: 70.0, mock_user3: 30.0},
             description="Updated test expense"
         )
 
