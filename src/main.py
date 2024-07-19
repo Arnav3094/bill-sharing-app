@@ -9,7 +9,7 @@ from datetime import datetime
 class BillSharingApp:
     def __init__(self):
         db_params = {
-        "password": "root@123",
+        "password": "rootdatabase24",
         "filepath": "",
         "user": "root",
         "host": "localhost",
