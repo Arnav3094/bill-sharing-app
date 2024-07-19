@@ -68,13 +68,13 @@ class BillSharingApp:
     def show_main_menu(self):
         print(f"\nHello, {self.current_user.name}!")
         print("1. Create a new group")
-        #print("2. Join a group")
         print("2. View my groups")
         print("3. Manage a group")
         print("4. Manage expenses")
         print("5. Manage transactions")
         print("6. View dues")
-        print("7. Logout")
+        print("7. View group dues")  # New option
+        print("8. Logout")
         choice = input("Enter your choice: ")
 
         if choice == '1':
@@ -90,6 +90,8 @@ class BillSharingApp:
         elif choice == '6':
             self.view_dues()
         elif choice == '7':
+            self.view_group_dues()  # Call to the new function
+        elif choice == '8':
             self.current_user = None
             print("Logged out successfully.")
         else:
@@ -590,9 +592,46 @@ class BillSharingApp:
                 print(f"Group: {due['group_name']}")
                 print("---")
 
-    
+    def view_group_dues(self):
+        group_id = input("Enter the group ID to view dues: ")
+        try:
+            group = Group.get_group(group_id, self.connector)
+            
+            # Check if the current user is a member of the group
+            c=0
+            for member in group._members:
+                if self.current_user.user_id ==  member.user_id:
+                    c=1
+            if c == 0:
+                print("You are not a member of this group.")
+                return
+            
+
+            query = """
+            SELECT u.name, u.user_id, SUM(ep.amount) as total_owed
+            FROM Expenses e
+            JOIN ExpenseParticipants ep ON e.expense_id = ep.expense_id
+            JOIN Users u ON ep.user_id = u.user_id
+            WHERE e.group_id = %s AND e.paid_by = %s AND ep.settled != 'SETTLED' AND ep.user_id != %s
+            GROUP BY u.user_id
+            """
+            dues = self.connector.execute(query, (group_id, self.current_user.user_id, self.current_user.user_id))
+
+            if not dues:
+                print(f"No one owes you money in the group '{group.name}'.")
+            else:
+                print(f"\nDues in group '{group.name}':")
+                for due in dues:
+                    print(f"{due['name']} owes you ${due['total_owed']:.2f}")
+
+            # Calculate total amount owed to the user in this group
+            total_owed = sum(due['total_owed'] for due in dues)
+            print(f"\nTotal amount owed to you in this group: ${total_owed:.2f}")
+
+        except ValueError as e:
+            print(f"Failed to retrieve group dues: {e}")
+        
 
 if __name__ == "__main__":
     app = BillSharingApp()
     app.start()
-
