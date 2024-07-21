@@ -328,8 +328,8 @@ class BillSharingApp:
                     self.connector.execute(update_query, (new_amount,expense.expense_id, expense.payer.user_id))
 
                     #marking the person not included(0 share) in expense as settled
-                    for member in participants:
-                        if float(expense.participants[member]) == 0.00 :
+                    for member in expense.participants:
+                        if expense.participants[member] == 0.0 :
                             update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                             self.connector.execute(update_query, (expense.expense_id, member.user_id))
 
@@ -389,8 +389,8 @@ class BillSharingApp:
                 self.connector.execute(update_query, (new_amount,expense.expense_id, expense.payer.user_id))
 
                 #marking the person not included(0 share) in expense as settled
-                for member in participants:
-                    if float(expense.participants[member]) == 0.00 :
+                for member in expense.participants:
+                    if expense.participants[member] == 0.0 :
                         update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                         self.connector.execute(update_query, (expense.expense_id, member.user_id))
             else:
@@ -436,11 +436,11 @@ class BillSharingApp:
                     check_settled_query = "SELECT COUNT(*) as count FROM ExpenseParticipants WHERE expense_id = %s AND settled != 'SETTLED'"
                     result = self.connector.execute(check_settled_query, (expense.expense_id,), fetchall=False)
                     if result['count'] == 0:
-                            print(f"ID: {expense.expense_id}, Amount: ${expense.amount:.2f}, "
+                            print(f"ID: {expense.expense_id}, Amount: {expense.amount:.2f}, "
                                 f"Payer: {expense.payer.name}, Description: {expense.description}, "
                                 f"Tag: {expense.tag}, Group: {expense.group.name}, Status: settled.")
                     else:
-                        print(f"ID: {expense.expense_id}, Amount: ${expense.amount:.2f}, "
+                        print(f"ID: {expense.expense_id}, Amount: {expense.amount:.2f}, "
                                 f"Payer: {expense.payer.name}, Description: {expense.description}, "
                                 f"Tag: {expense.tag}, Group: {expense.group.name}, Status: Not settled.")
 
@@ -587,8 +587,8 @@ class BillSharingApp:
             for due in dues:
                 print(f"Expense ID: {due['expense_id']}")
                 print(f"Description: {due['description']}")
-                print(f"Total Amount: ${due['amount']:.2f}")
-                print(f"You Owe: ${due['owed_amount']:.2f}")
+                print(f"Total Amount: {due['amount']:.2f}")
+                print(f"You Owe: {due['owed_amount']:.2f}")
                 print(f"Group: {due['group_name']}")
                 print("---")
 
@@ -622,11 +622,11 @@ class BillSharingApp:
             else:
                 print(f"\nDues in group '{group.name}':")
                 for due in dues:
-                    print(f"{due['name']} owes you ${due['total_owed']:.2f}")
+                    print(f"{due['name']} owes you {due['total_owed']:.2f}")
 
             # Calculate total amount owed to the user in this group
             total_owed = sum(due['total_owed'] for due in dues)
-            print(f"\nTotal amount owed to you in this group: ${total_owed:.2f}")
+            print(f"\nTotal amount owed to you in this group: {total_owed:.2f}")
 
         except ValueError as e:
             print(f"Failed to retrieve group dues: {e}")
