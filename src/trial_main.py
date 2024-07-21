@@ -1,7 +1,6 @@
 from connector import Connector
-from user import User
 from group import Group
-
+from user import User
 
 
 def populate_database(connector):
@@ -17,7 +16,7 @@ def populate_database(connector):
     ]
     users = []
     for data in users_data:
-        user = User(name=data['name'], email=data['email'], password=data['password'], connector=connector)
+        user = User(name = data['name'], email = data['email'], password = data['password'], connector = connector)
         users.append(user)
 
     # Create sample groups
@@ -27,8 +26,10 @@ def populate_database(connector):
     ]
     groups = []
     for data in groups_data:
-        group = Group(admin=data['admin'], name=data['name'], members=data['members'], description=data['description'], connector=connector)
+        group = Group(admin = data['admin'], name = data['name'], members = data['members'],
+                      description = data['description'], connector = connector)
         groups.append(group)
+
 
 def test_cases(connector):
     """
@@ -38,30 +39,31 @@ def test_cases(connector):
     # Test User registration and login
     try:
         # Register a new user
-        user1 = User(name="David", email="david@example.com", password="david123", connector=connector)
+        user1 = User(name = "David", email = "david@example.com", password = "david123", connector = connector)
         print(f"Registered user: {user1}")
 
         # Try registering a user with an existing email (should raise ValueError)
         try:
-            duplicate_user = User(name="David2", email="david@example.com", password="david1234", connector=connector)
+            duplicate_user = User(name = "David2", email = "david@example.com", password = "david1234",
+                                  connector = connector)
             print(f"Duplicate user registered: {duplicate_user}")
         except ValueError as e:
             print(f"Duplicate registration failed: {e}")
 
         # Login with valid credentials
-        logged_in_user = User.login(email="david@example.com", password="david123", connector=connector)
+        logged_in_user = User.login(email = "david@example.com", password = "david123", connector = connector)
         print(f"Logged in user: {logged_in_user}")
 
         # Try logging in with invalid credentials (should raise ValueError)
         try:
-            invalid_login = User.login(email="david@example.com", password="wrongpassword", connector=connector)
+            invalid_login = User.login(email = "david@example.com", password = "wrongpassword", connector = connector)
             print(f"Logged in user with wrong password: {invalid_login}")
         except ValueError as e:
             print(f"Login failed with wrong password: {e}")
 
         # Login with an unregistered email (should raise ValueError)
         try:
-            invalid_login = User.login(email="nonexistent@example.com", password="password", connector=connector)
+            invalid_login = User.login(email = "nonexistent@example.com", password = "password", connector = connector)
             print(f"Logged in with unregistered email: {invalid_login}")
         except ValueError as e:
             print(f"Login failed with unregistered email: {e}")
@@ -72,48 +74,49 @@ def test_cases(connector):
     # Test Group operations
     try:
         # Create a new group
-        new_group = Group(admin=user1, name="New Group", members=[user1], description="Testing group", connector=connector)
+        new_group = Group(admin = user1, name = "New Group", members = [user1], description = "Testing group",
+                          connector = connector)
         print(f"Created group: {new_group}")
         # print(Group.get_group(new_group.group_id,connector).members)
 
         # Add a member to the group
-        new_member = User(name="Eve", email="eve@example.com", password="eve123", connector=connector)
-        new_group.add_member(user_id=new_member.user_id)
+        new_member = User(name = "Eve", email = "eve@example.com", password = "eve123", connector = connector)
+        new_group.add_member(user_id = new_member.user_id)
         print(f"Added member to group: {new_group}")
 
         # print(Group.get_group(new_group.group_id,connector).members)
 
         # Add the same member again (should raise ValueError)
         try:
-            new_group.add_member(user_id=new_member.user_id)
+            new_group.add_member(user_id = new_member.user_id)
             print(f"Added duplicate member to group: {new_group}")
         except ValueError as e:
             print(f"Adding duplicate member failed: {e}")
 
         # Change group admin
-        new_admin = User(name="Frank", email="frank@example.com", password="frank123", connector=connector)
-        new_group.add_member(user_id=new_admin.user_id)  # Ensure the new admin is a member of the group
+        new_admin = User(name = "Frank", email = "frank@example.com", password = "frank123", connector = connector)
+        new_group.add_member(user_id = new_admin.user_id)  # Ensure the new admin is a member of the group
         print(f"Added member to group: {new_group}")
         new_group.admin = new_admin
         print(f"Changed group admin: {new_group}")
         # print(Group.get_group(new_group.group_id,connector).members)
 
         # Remove a member from the group
-        new_group.remove_member(user_id=new_member.user_id)
+        new_group.remove_member(user_id = new_member.user_id)
         print(f"Removed member from group: {new_group}")
 
         # Try removing the admin from the group (should raise ValueError)
         try:
-            new_group.remove_member(user_id=user1.user_id)
+            new_group.remove_member(user_id = user1.user_id)
             print(f"Removed admin from group: {new_group}")
         except ValueError as e:
             print(f"Removing admin failed: {e}")
 
         # Add multiple members to the group
-        member2 = User(name="George", email="george@example.com", password="george123", connector=connector)
-        member3 = User(name="Hannah", email="hannah@example.com", password="hannah123", connector=connector)
-        new_group.add_member(user_id=member2.user_id)
-        new_group.add_member(user_id=member3.user_id)
+        member2 = User(name = "George", email = "george@example.com", password = "george123", connector = connector)
+        member3 = User(name = "Hannah", email = "hannah@example.com", password = "hannah123", connector = connector)
+        new_group.add_member(user_id = member2.user_id)
+        new_group.add_member(user_id = member3.user_id)
         print(f"Added multiple members to group: {new_group}")
 
         # NOTE : The below 2 test cases are failing because of the implementation of the Group class
@@ -137,8 +140,6 @@ def test_cases(connector):
         print("Test cases completed.")
 
 
-
-
 def main():
     # Database connection parameters
     db_params = {
@@ -153,7 +154,7 @@ def main():
     # Create a Connector object
     try:
         connector = Connector(**db_params)
-        if not connector :
+        if not connector:
             raise ValueError("Connector is empty")
         print("Connected to database successfully.")
 

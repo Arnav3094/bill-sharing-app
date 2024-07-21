@@ -1,24 +1,26 @@
 import sys
-from user import User
-from group import Group
-from expense import Expense
-from transaction import Transaction
-from connector import Connector
 from datetime import datetime
+
+from connector import Connector
+from expense import Expense
+from group import Group
+from transaction import Transaction
+from user import User
+
 
 class BillSharingApp:
     def __init__(self):
         db_params = {
-        "password": "rootdatabase24",
-        "filepath": "",
-        "user": "root",
-        "host": "localhost",
-        "port": "3306",
-        "database": "bill_sharing_app"
-    }
- 
-    # Create a Connector object
-    
+            "password": "rootdatabase24",
+            "filepath": "",
+            "user": "root",
+            "host": "localhost",
+            "port": "3306",
+            "database": "bill_sharing_app"
+        }
+
+        # Create a Connector object
+
         self.connector = Connector(**db_params)
         self.current_user = None
 
@@ -60,7 +62,7 @@ class BillSharingApp:
         email = input("Enter your email: ")
         password = input("Enter your password: ")
         try:
-            self.current_user = User(name, email, password, connector=self.connector)
+            self.current_user = User(name, email, password, connector = self.connector)
             print(f"Registration successful. Welcome, {self.current_user.name}!")
         except ValueError as e:
             print(f"Registration failed: {e}")
@@ -101,14 +103,13 @@ class BillSharingApp:
         name = input("Enter group name: ")
         description = input("Enter group description (optional): ")
         try:
-            group = Group(admin=self.current_user, name=name,members=[self.current_user], description=description, connector=self.connector)
+            group = Group(admin = self.current_user, name = name, members = [self.current_user],
+                          description = description, connector = self.connector)
             print(f"Group '{group.name}' created successfully with ID: {group.group_id}")
             group.add_member(self.current_user.user_id)
 
         except ValueError as e:
             print(f"Group creation failed: {e}")
-
-    
 
     def view_groups(self):
         group_ids = self.current_user.get_groups()
@@ -119,10 +120,11 @@ class BillSharingApp:
         print("Your groups:")
         for group_id in group_ids:
             group = Group.get_group(group_id, self.connector)
-            print(f"ID: {group.group_id}, Group Name: {group.name}, Admin: {group.admin.name} Description: {group.description}")
+            print(
+                f"ID: {group.group_id}, Group Name: {group.name}, Admin: {group.admin.name} Description: {group.description}")
 
     def manage_group(self):
-        group_id=input("entr the id of thr group you want to manage: ")
+        group_id = input("entr the id of thr group you want to manage: ")
 
         try:
             group = Group.get_group(group_id, self.connector)
@@ -142,7 +144,7 @@ class BillSharingApp:
             print("4. Change group name")
             print("5. Change group description")
             print("6. View members")
-            
+
             print("7. Back to main menu")
             choice = input("Enter your choice: ")
 
@@ -153,7 +155,7 @@ class BillSharingApp:
             elif choice == '3':
                 self.remove_member_from_group(group)
             elif choice == '4':
-                self.change_group_name(group) 
+                self.change_group_name(group)
             elif choice == '5':
                 self.change_group_description(group)
             elif choice == '6':
@@ -163,7 +165,7 @@ class BillSharingApp:
             else:
                 print("Invalid choice. Please try again.")
 
-    def add_member_to_group(self, group:Group):
+    def add_member_to_group(self, group: Group):
         email = input("Enter the email of the user you want to add: ")
         try:
             user = User.get_user_by_email(email, self.connector)  # Using
@@ -172,9 +174,7 @@ class BillSharingApp:
         except ValueError as e:
             print(f"Failed to add member: {e}")
 
-    def add_multiple_members_to_group(self,group:Group):
-        
-        
+    def add_multiple_members_to_group(self, group: Group):
 
         emails = input("Enter the emails of the users you want to add (comma-separated): ").split(',')
         emails = [email.strip() for email in emails]  # Remove any whitespace
@@ -182,7 +182,7 @@ class BillSharingApp:
         user_ids = []
         for email in emails:
             try:
-                user = User.get_user_by_email(email, self.connector) # Using login method to retrieve user
+                user = User.get_user_by_email(email, self.connector)  # Using login method to retrieve user
                 user_ids.append(user.user_id)
             except ValueError as e:
                 print(f"Failed to find user with email {email}: {e}")
@@ -193,9 +193,7 @@ class BillSharingApp:
         else:
             print("No valid users to add.")
 
-   
-
-    def remove_member_from_group(self, group:Group):
+    def remove_member_from_group(self, group: Group):
         email = input("Enter the email of the user you want to remove: ")
         try:
             user = User.get_user_by_email(email, self.connector)
@@ -204,7 +202,7 @@ class BillSharingApp:
         except ValueError as e:
             print(f"Failed to remove member: {e}")
 
-    def change_group_name(self, group:Group):
+    def change_group_name(self, group: Group):
         new_name = input("Enter the new name for the group: ")
         try:
             group.name = new_name
@@ -212,7 +210,7 @@ class BillSharingApp:
         except ValueError as e:
             print(f"Failed to change group name: {e}")
 
-    def change_group_description(self, group:Group):
+    def change_group_description(self, group: Group):
         new_description = input("Enter the new description for the group: ")
         try:
             group.description = new_description
@@ -220,11 +218,11 @@ class BillSharingApp:
         except ValueError as e:
             print(f"Failed to change group description: {e}")
 
-    def view_group_members(self, group:Group):
+    def view_group_members(self, group: Group):
         print(f"Members of group '{group.name}':")
         for member in group.members:
             print(f"- {member.name} (Email: {member.email})")
-    
+
     def manage_expenses(self):
         while True:
             print("\nExpense Management")
@@ -232,7 +230,7 @@ class BillSharingApp:
             print("2. Edit an expense")
             print("3. Delete an expense")
             print("4. View expenses")
-            #print("5. Split an expense")
+            # print("5. Split an expense")
             print("5. Back to main menu")
             choice = input("Enter your choice: ")
 
@@ -251,9 +249,6 @@ class BillSharingApp:
             else:
                 print("Invalid choice. Please try again.")
 
-    
-
-
     def add_expense(self):
         group_id = input("Enter the group ID for this expense: ")
         try:
@@ -261,31 +256,31 @@ class BillSharingApp:
             amount = float(input("Enter the total expense amount: "))
             description = input("Enter a description for the expense: ")
             tag = input("Enter a tag for the expense (optional): ")
-            
+
             participants = {}
             participants[self.current_user] = amount
             for member in group._members:
                 if member.user_id != self.current_user.user_id:
-                    participants[member] =0.0
-            
-            expense = Expense(amount=amount, payer=self.current_user, group=group,
-                              participants=participants, description=description,
-                              tag=tag, connector=self.connector)
+                    participants[member] = 0.0
+
+            expense = Expense(amount = amount, payer = self.current_user, group = group,
+                              participants = participants, description = description,
+                              tag = tag, connector = self.connector)
             print(f"Expense added successfully with ID: {expense.expense_id}")
 
             try:
-                #expense = Expense.get_expense(expense.expense_id, self.connector)
+                # expense = Expense.get_expense(expense.expense_id, self.connector)
                 if self.current_user.user_id == expense.payer.user_id:
                     print(f"Current expense details: {expense}")
-                    
+
                     print("Choose split method:")
                     print("1. Equal")
                     print("2. Unequal")
                     print("3. Percentages")
                     split_method = input("Enter your choice (1/2/3): ")
-                    
+
                     participants = list(expense.participants.keys())
-                    
+
                     if split_method == '1':
                         participant_new = [expense.payer]
                         for member in participants:
@@ -294,7 +289,7 @@ class BillSharingApp:
                                 choice = ch.lower()
                                 if choice == 'y':
                                     participant_new.append(member)
-                            
+
                         expense.calculate_and_split_expense('equal', participant_new)
                     elif split_method == '2':
                         amounts = []
@@ -303,9 +298,10 @@ class BillSharingApp:
                                 amount = float(input(f"Enter your share amount: "))
                                 amounts.append(amount)
                             else:
-                                amount = float(input(f"Enter share amount for {participant.name} (Enter 0 if you want to exclude): "))
+                                amount = float(input(
+                                    f"Enter share amount for {participant.name} (Enter 0 if you want to exclude): "))
                                 amounts.append(amount)
-                        expense.calculate_and_split_expense('unequal', participants, amounts=amounts)
+                        expense.calculate_and_split_expense('unequal', participants, amounts = amounts)
                     elif split_method == '3':
                         percentages = []
                         for participant in participants:
@@ -313,9 +309,10 @@ class BillSharingApp:
                                 amount = float(input(f"Enter your share percentage: "))
                                 amounts.append(amount)
                             else:
-                                amount = float(input(f"Enter share percentage for {participant.name} (Enter 0 if you want to exclude): "))
+                                amount = float(input(
+                                    f"Enter share percentage for {participant.name} (Enter 0 if you want to exclude): "))
                                 amounts.append(amount)
-                        expense.calculate_and_split_expense('percentages', participants, percentages=percentages)
+                        expense.calculate_and_split_expense('percentages', participants, percentages = percentages)
                     else:
                         print("Invalid choice. Split cancelled.")
                         return
@@ -325,14 +322,13 @@ class BillSharingApp:
                     update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                     self.connector.execute(update_query, (expense.expense_id, expense.payer.user_id))
                     update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
-                    self.connector.execute(update_query, (new_amount,expense.expense_id, expense.payer.user_id))
+                    self.connector.execute(update_query, (new_amount, expense.expense_id, expense.payer.user_id))
 
-                    #marking the person not included(0 share) in expense as settled
+                    # marking the person not included(0 share) in expense as settled
                     for member in participants:
-                        if float(expense.participants[member]) == 0.00 :
+                        if float(expense.participants[member]) == 0.00:
                             update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                             self.connector.execute(update_query, (expense.expense_id, member.user_id))
-
 
                     print("Expense split successfully.")
                     print(f"\nSplit details for expense '{expense.description}':")
@@ -340,17 +336,14 @@ class BillSharingApp:
                     print(f"Payer: {expense.payer.name} (Settled)")
                 else:
                     print("Can't split expense. You are not the payer")
-                
-                
+
+
             except ValueError as e:
                 print(f"Failed to split expense: {e}")
 
-            
+
         except ValueError as e:
             print(f"Failed to add expense: {e}")
-
-    
-
 
     def edit_expense(self):
         expense_id = input("Enter the ID of the expense you want to edit: ")
@@ -362,18 +355,20 @@ class BillSharingApp:
                 amount = float(input("Enter new amount (press enter to keep current): ") or expense.amount)
                 description = input("Enter new description (press enter to keep current): ") or expense.description
                 tag = input("Enter new tag (press enter to keep current): ") or expense.tag
-                
+
                 participants = {}
                 for user in expense.participants:
                     if user.user_id == expense.payer.user_id:
-                        amount_owed = float(input(f"Enter new amount owed by you (press enter to keep current): ") or expense.participants[user])
+                        amount_owed = float(input(f"Enter new amount owed by you (press enter to keep current): ") or
+                                            expense.participants[user])
                         participants[user] = amount_owed
                     else:
-                        amount_owed = float(input(f"Enter new amount owed by {user.name} (press enter to keep current): ") or expense.participants[user])
+                        amount_owed = float(
+                            input(f"Enter new amount owed by {user.name} (press enter to keep current): ") or
+                            expense.participants[user])
                         participants[user] = amount_owed
 
-
-                expense.edit_expense(amount=amount, description=description, tag=tag, participants=participants)
+                expense.edit_expense(amount = amount, description = description, tag = tag, participants = participants)
                 print("Expense updated successfully.")
                 print(f"\nUpdated Split details for expense '{expense.description}':")
                 print(f"Total amount: {expense.amount:.2f}")
@@ -386,11 +381,11 @@ class BillSharingApp:
                 update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                 self.connector.execute(update_query, (expense.expense_id, expense.payer.user_id))
                 update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
-                self.connector.execute(update_query, (new_amount,expense.expense_id, expense.payer.user_id))
+                self.connector.execute(update_query, (new_amount, expense.expense_id, expense.payer.user_id))
 
-                #marking the person not included(0 share) in expense as settled
+                # marking the person not included(0 share) in expense as settled
                 for member in participants:
-                    if float(expense.participants[member]) == 0.00 :
+                    if float(expense.participants[member]) == 0.00:
                         update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                         self.connector.execute(update_query, (expense.expense_id, member.user_id))
             else:
@@ -413,11 +408,11 @@ class BillSharingApp:
             print(f"An error occurred while deleting the expense: {e}")
 
     def view_expenses(self):
-        
+
         try:
-            
+
             group_id = input("Enter the group ID to view expenses: ")
-            
+
             if group_id:
                 expenses = Expense.get_group_expenses(group_id, self.connector)
                 """ else:
@@ -428,28 +423,26 @@ class BillSharingApp:
             else:
                 raise ValueError("Group ID cannot be empty")
 
-            
             if not expenses:
                 print("No expenses found.")
             else:
                 for expense in expenses:
                     check_settled_query = "SELECT COUNT(*) as count FROM ExpenseParticipants WHERE expense_id = %s AND settled != 'SETTLED'"
-                    result = self.connector.execute(check_settled_query, (expense.expense_id,), fetchall=False)
+                    result = self.connector.execute(check_settled_query, (expense.expense_id,), fetchall = False)
                     if result['count'] == 0:
-                            print(f"ID: {expense.expense_id}, Amount: ${expense.amount:.2f}, "
-                                f"Payer: {expense.payer.name}, Description: {expense.description}, "
-                                f"Tag: {expense.tag}, Group: {expense.group.name}, Status: settled.")
+                        print(f"ID: {expense.expense_id}, Amount: ${expense.amount:.2f}, "
+                              f"Payer: {expense.payer.name}, Description: {expense.description}, "
+                              f"Tag: {expense.tag}, Group: {expense.group.name}, Status: settled.")
                     else:
                         print(f"ID: {expense.expense_id}, Amount: ${expense.amount:.2f}, "
-                                f"Payer: {expense.payer.name}, Description: {expense.description}, "
-                                f"Tag: {expense.tag}, Group: {expense.group.name}, Status: Not settled.")
+                              f"Payer: {expense.payer.name}, Description: {expense.description}, "
+                              f"Tag: {expense.tag}, Group: {expense.group.name}, Status: Not settled.")
 
 
-                
+
         except ValueError as e:
             print(f"Failed to retrieve expenses: {e}")
-        
-   
+
     def manage_transactions(self):
         while True:
             print("\nTransaction Management")
@@ -477,16 +470,16 @@ class BillSharingApp:
         expense_id = input("Enter the expense ID for this transaction: ")
         try:
             expense = Expense.get_expense(expense_id, self.connector)
-            
+
             # Check if the current user is a participant in the expense
-            c=0
+            c = 0
             for member in expense.participants:
                 if member.user_id == self.current_user.user_id:
-                    c=1
+                    c = 1
             if c == 1:
                 # Check if the expense is already settled for the current user
                 query = "SELECT settled FROM ExpenseParticipants WHERE expense_id = %s AND user_id = %s"
-                result = self.connector.execute(query, (expense_id, self.current_user.user_id), fetchall=False)
+                result = self.connector.execute(query, (expense_id, self.current_user.user_id), fetchall = False)
                 if result['settled'] == 'SETTLED':
                     print("You have already settled this expense.")
                     return
@@ -494,38 +487,41 @@ class BillSharingApp:
                 # Get the amount owed by the current user
                 for member in expense.participants:
                     if member.user_id == self.current_user.user_id:
-                        amount_owed =float(expense.participants[member])
+                        amount_owed = float(expense.participants[member])
 
                 if amount_owed <= 0:
                     print("You don't owe any money for this expense.")
                     return
 
                 print(f"You owe {amount_owed:.2f} for this expense.")
-                amount = float(input("Enter the amount you want to pay (must be less than or equal to the amount owed): "))
+                amount = float(
+                    input("Enter the amount you want to pay (must be less than or equal to the amount owed): "))
 
                 if amount > amount_owed:
                     print("You cannot pay more than you owe.")
                     return
 
-                transaction = Transaction(expense=expense, payer=self.current_user, payee=expense.payer, amount=amount, connector=self.connector)
+                transaction = Transaction(expense = expense, payer = self.current_user, payee = expense.payer,
+                                          amount = amount, connector = self.connector)
                 print(f"Transaction created successfully with ID: {transaction.trans_id}")
 
                 # Update the ExpenseParticipants table
                 new_amount_owed = amount_owed - amount
                 new_status = 'SETTLED' if new_amount_owed == 0 else 'PARTIAL'
                 update_query = "UPDATE ExpenseParticipants SET amount = %s, settled = %s WHERE expense_id = %s AND user_id = %s"
-                self.connector.execute(update_query, (new_amount_owed, new_status, expense_id, self.current_user.user_id))
+                self.connector.execute(update_query,
+                                       (new_amount_owed, new_status, expense_id, self.current_user.user_id))
 
                 # Check if the expense is fully settled
                 check_settled_query = "SELECT COUNT(*) as count FROM ExpenseParticipants WHERE expense_id = %s AND settled != 'SETTLED'"
-                result = self.connector.execute(check_settled_query, (expense_id,), fetchall=False)
+                result = self.connector.execute(check_settled_query, (expense_id,), fetchall = False)
                 if result['count'] == 0:
                     print("This expense is now fully settled.")
             else:
                 print("You are not a participant")
         except ValueError as e:
             print(f"Failed to create transaction: {e}")
-    
+
     def view_transactions_for_expense(self):
         expense_id = input("Enter the expense ID to view its transactions: ")
         try:
@@ -545,7 +541,7 @@ class BillSharingApp:
     def view_user_transactions(self):
         start_date = input("Enter start date (YYYY-MM-DD) or press enter to skip: ")
         end_date = input("Enter end date (YYYY-MM-DD) or press enter to skip: ")
-        
+
         start_datetime = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
         end_datetime = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
 
@@ -565,7 +561,8 @@ class BillSharingApp:
             transaction = Transaction.get_transaction(trans_id, self.connector)
             transaction.delete()
             update_query = "UPDATE ExpenseParticipants SET amount = %s, settled = %s WHERE expense_id = %s AND user_id = %s"
-            self.connector.execute(update_query, (transaction._amount, 'NO',transaction._expense.expense_id , self.current_user.user_id))
+            self.connector.execute(update_query, (
+            transaction._amount, 'NO', transaction._expense.expense_id, self.current_user.user_id))
             print("Transaction deleted successfully.")
         except ValueError as e:
             print(f"Failed to delete transaction: {e}")
@@ -580,7 +577,7 @@ class BillSharingApp:
         WHERE ep.user_id = %s AND ep.settled != 'SETTLED'
         """
         dues = self.connector.execute(query, (self.current_user.user_id,))
-        
+
         if not dues:
             print("You don't have any outstanding dues.")
         else:
@@ -596,16 +593,15 @@ class BillSharingApp:
         group_id = input("Enter the group ID to view dues: ")
         try:
             group = Group.get_group(group_id, self.connector)
-            
+
             # Check if the current user is a member of the group
-            c=0
+            c = 0
             for member in group._members:
-                if self.current_user.user_id ==  member.user_id:
-                    c=1
+                if self.current_user.user_id == member.user_id:
+                    c = 1
             if c == 0:
                 print("You are not a member of this group.")
                 return
-            
 
             query = """
             SELECT u.name, u.user_id, SUM(ep.amount) as total_owed
@@ -630,7 +626,7 @@ class BillSharingApp:
 
         except ValueError as e:
             print(f"Failed to retrieve group dues: {e}")
-        
+
 
 if __name__ == "__main__":
     app = BillSharingApp()

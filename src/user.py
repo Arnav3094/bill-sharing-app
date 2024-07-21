@@ -1,8 +1,9 @@
-from connector import *
-from datetime import datetime
-from uuid import uuid4
-from typing import List
 import hashlib
+from datetime import datetime
+from typing import List
+from uuid import uuid4
+
+from connector import *
 
 
 class User:
@@ -37,7 +38,7 @@ class User:
 
         existing_user = user_exists or email_exists
         if existing_user:
-             # Use the email to retrieve user details if email exists, otherwise use user_id
+            # Use the email to retrieve user details if email exists, otherwise use user_id
             user_details_query = "SELECT * FROM Users WHERE " + ("email = %s" if email_exists else "user_id = %s")
             user_details = self.connector.execute(user_details_query, (email if email_exists else user_id,))
             if user_details:
@@ -56,14 +57,15 @@ class User:
                 raise ValueError("ERROR[User.__init__]: User does not exist in the database.")
         else:
             if user_id:
-                raise ValueError(f"ERROR[User.__init__]: You are trying to assign a user_id to a group that does not exist in the database. user_id: {user_id}")
+                raise ValueError(
+                    f"ERROR[User.__init__]: You are trying to assign a user_id to a group that does not exist in the database. user_id: {user_id}")
             if not password:
                 raise ValueError("ERROR[User.__init__]: Password cannot be empty.")
             self._user_id = f"U{uuid4()}"
             self._name = name
             self._email = email
             self._created = datetime.now()
-            self._password = User.hash_password(password)  
+            self._password = User.hash_password(password)
             # Insert the user into the database
             insert_user_query = "INSERT INTO Users (user_id, name, email, password, created) VALUES (%s, %s, %s, %s, %s)"
             insert_user_params = (self._user_id, self._name, self._email, self._password, self._created)
@@ -125,7 +127,8 @@ class User:
         user_data = connector.execute(query, params = params, fetchall = False)
         if not user_data:
             raise ValueError("ERROR[User.login]:Invalid email or password")
-        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                    created = user_data['created'], connector = connector)
 
     @staticmethod
     def get_user(user_id: str, connector: Connector):
@@ -139,7 +142,8 @@ class User:
         user_data = connector.execute(query, params = (user_id,), fetchall = False)
         if not user_data:
             raise ValueError(f"ERROR[User.get_user]: User with user_id: {user_id} does not exist in the database.")
-        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                    created = user_data['created'], connector = connector)
 
     @staticmethod
     def get_users(user_ids: List[str], connector: Connector):
@@ -152,7 +156,8 @@ class User:
         placeholders = ', '.join(['%s'] * len(user_ids))
         query = f"SELECT * FROM Users WHERE user_id IN ({placeholders})"
         users_data = connector.execute(query, tuple(user_ids))
-        users = [User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'], created = user_data['created'], connector = connector)
+        users = [User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                      created = user_data['created'], connector = connector)
                  for user_data in users_data]
         return users
 
@@ -165,12 +170,12 @@ class User:
         result = self.connector.execute(select_query, params = (self.user_id,))
         group_ids = [row['group_id'] for row in result]
         return group_ids
-    
+
     @staticmethod
     def get_user_by_email(email: str, connector: Connector):
         query = "SELECT * FROM Users WHERE email = %s"
-        user_data = connector.execute(query, params=(email,), fetchall=False)
+        user_data = connector.execute(query, params = (email,), fetchall = False)
         if not user_data:
             raise ValueError(f"User with email: {email} does not exist in the database.")
-        return User(user_id=user_data['user_id'], name=user_data['name'], email=user_data['email'],
-                    created=user_data['created'], connector=connector)
+        return User(user_id = user_data['user_id'], name = user_data['name'], email = user_data['email'],
+                    created = user_data['created'], connector = connector)

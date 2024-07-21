@@ -1,9 +1,11 @@
-from typing import List
 from datetime import datetime
+from typing import List
 from uuid import uuid4
-from user import User
-from expense import Expense
+
 from connector import Connector
+from expense import Expense
+from user import User
+
 
 class Transaction:
     def __init__(self, expense: Expense, payer: User, payee: User, amount: float,
@@ -18,8 +20,8 @@ class Transaction:
         if trans_id:
             # Check if transaction exists in the database
             check_transaction_query = "SELECT * FROM Transactions WHERE trans_id = %s"
-            transaction_data = self._connector.execute(check_transaction_query, (trans_id,), fetchall=False)
-            
+            transaction_data = self._connector.execute(check_transaction_query, (trans_id,), fetchall = False)
+
             if transaction_data:
                 self._trans_id = trans_id
                 # Update other attributes if necessary
@@ -78,7 +80,7 @@ class Transaction:
         JOIN Users u2 ON t.payee_id = u2.user_id
         WHERE t.trans_id = %s
         """
-        transaction_data = connector.execute(query, (trans_id,), fetchall=False)
+        transaction_data = connector.execute(query, (trans_id,), fetchall = False)
 
         if not transaction_data:
             raise ValueError(f"Transaction with ID {trans_id} not found.")
@@ -88,13 +90,13 @@ class Transaction:
         payee = User.get_user(transaction_data['payee_id'], connector)
 
         return Transaction(
-            expense=expense,
-            payer=payer,
-            payee=payee,
-            amount=transaction_data['amount'],
-            trans_id=trans_id,
-            timestamp=transaction_data['timestamp'],
-            connector=connector
+            expense = expense,
+            payer = payer,
+            payee = payee,
+            amount = transaction_data['amount'],
+            trans_id = trans_id,
+            timestamp = transaction_data['timestamp'],
+            connector = connector
         )
 
     @staticmethod
@@ -104,7 +106,8 @@ class Transaction:
         return [Transaction.get_transaction(t['trans_id'], expense.group.connector) for t in transaction_ids]
 
     @staticmethod
-    def get_transactions_for_user(user: User, start_date: datetime = None, end_date: datetime = None) -> List['Transaction']:
+    def get_transactions_for_user(user: User, start_date: datetime = None, end_date: datetime = None) -> List[
+        'Transaction']:
         query = "SELECT trans_id FROM Transactions WHERE payer_id = %s OR payee_id = %s"
         params = [user.user_id, user.user_id]
 
@@ -117,13 +120,12 @@ class Transaction:
 
         transaction_ids = user.connector.execute(query, tuple(params))
         return [Transaction.get_transaction(t['trans_id'], user.connector) for t in transaction_ids]
-        
-        
+
     def __str__(self):
         return (f"Transaction: {self.payer.name} paid {self.payee.name} "
                 f"{self.amount:.2f} for '{self.expense.description}' with Transaction ID {self.trans_id} "
                 f"on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     def __repr__(self):
         return (f"Transaction(trans_id={self.trans_id}, expense={self.expense.description}, "
                 f"payer={self.payer.name}, payee={self.payee.name}, amount={self.amount}, "
