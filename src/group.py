@@ -1,11 +1,14 @@
 from typing import Optional
-from user import *
 from uuid import uuid4
+
+from user import *
 
 
 class Group:
-    def __init__(self,  admin: User, name: str, group_id: str = None, connector: Connector = None, description: str = None,
-                 members = Optional[List[User]], password: str = "", filepath: str = "", user: str = "root", host: str = "localhost",
+    def __init__(self, admin: User, name: str, group_id: str = None, connector: Connector = None,
+                 description: str = None,
+                 members = Optional[List[User]], password: str = "", filepath: str = "", user: str = "root",
+                 host: str = "localhost",
                  port: str = "3306", database: str = "bill_sharing_app"):
         """
         Creates a group object and automatically updates the database with the new group if the group_id is not present in the database.
@@ -37,7 +40,8 @@ class Group:
             self._name = group_details[0]['name']
             self._admin = User.get_user(group_details[0]['admin_id'], self.connector)
             self._description = group_details[0]['description']
-            self._members = User.get_users([member['user_id'] for member in self.connector.execute('SELECT user_id FROM GroupMembers WHERE group_id = %s', params = (group_id,))], self.connector)
+            self._members = User.get_users([member['user_id'] for member in self.connector.execute(
+                'SELECT user_id FROM GroupMembers WHERE group_id = %s', params = (group_id,))], self.connector)
             if self.admin in self.members:
                 self._members.remove(self.admin)
             self._created = group_details[0]['created']
@@ -51,7 +55,8 @@ class Group:
                 raise ValueError("Members provided do not match the members in the database") """
         else:
             if group_id:
-                raise ValueError(f"ERROR[Group.__init__]: You are trying to assign a group_id to a group that does not exist in the database. group_id: {group_id}")
+                raise ValueError(
+                    f"ERROR[Group.__init__]: You are trying to assign a group_id to a group that does not exist in the database. group_id: {group_id}")
             self._group_id = f"G{str(uuid4())}"
             self._connector = connector
             self._name = name
@@ -61,11 +66,11 @@ class Group:
             if admin in self._members:
                 self._members.remove(admin)
             self._created = datetime.now()
-                       
             # If group does not exist in the database, insert the group and its members
             if description:
                 insert_group_query = "INSERT INTO GroupDetails (group_id, name, description, admin_id, created) VALUES (%s, %s, %s, %s, %s)"
-                insert_group_params = (self._group_id, self._name, self._description, self._admin.user_id, self._created)
+                insert_group_params = (
+                self._group_id, self._name, self._description, self._admin.user_id, self._created)
             else:
                 insert_group_query = "INSERT INTO GroupDetails (group_id, name, admin_id, created) VALUES (%s, %s, %s, %s)"
                 insert_group_params = (self._group_id, self._name, self._admin.user_id, self._created)
@@ -114,7 +119,7 @@ class Group:
         return self._admin
 
     @admin.setter
-    def admin(self, new_admin : User):
+    def admin(self, new_admin: User):
         if not new_admin:
             raise ValueError("Admin cannot be empty")
         if not any(member == new_admin.user_id for member in self.members):
@@ -170,7 +175,8 @@ class Group:
 
         # Bulk remove members not in new_members
         if members_to_remove:
-            remove_query = 'DELETE FROM GroupMembers WHERE group_id = %s AND user_id IN (%s)' % (self.group_id, ','.join(['%s'] * len(members_to_remove)))
+            remove_query = 'DELETE FROM GroupMembers WHERE group_id = %s AND user_id IN (%s)' % (
+            self.group_id, ','.join(['%s'] * len(members_to_remove)))
             self.connector.execute(remove_query, tuple(members_to_remove))
 
         # Check all user IDs exist, in a single database query
@@ -181,7 +187,8 @@ class Group:
 
         # Bulk add new members
         if members_to_add:
-            add_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES ' + ','.join(['(%s, %s)'] * len(members_to_add))
+            add_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES ' + ','.join(
+                ['(%s, %s)'] * len(members_to_add))
             add_params = []
             for user_id in members_to_add:
                 add_params.extend((self.group_id, user_id))
@@ -208,7 +215,7 @@ class Group:
         # This returns all user IDs that are present in the database that are in the input list
 
         # Convert the list of tuples to a set of user IDs
-        existing_user_ids_set = set([user_id[0] for user_id in existing_user_ids])
+        existing_user_ids_set = set(user['user_id'] for user in existing_user_ids)
 
         # Find and return the missing members
         missing_members = [user_id for user_id in user_ids if user_id not in existing_user_ids_set]
@@ -240,7 +247,7 @@ class Group:
         if not group_data:
             raise ValueError(f"Group with ID {group_id} not found")
 
-        group_data = group_data[0] #Extracting the single dictionary from the list
+        group_data = group_data[0]  # Extracting the single dictionary from the list
 
         # Fetch member user IDs
         select_members_query = 'SELECT user_id FROM GroupMembers WHERE group_id = %s'
@@ -275,11 +282,12 @@ class Group:
         if existing_member:
             raise ValueError(f"User with ID {user_id} is already a member of this group")
 
-         # If not a member, proceed to add the user
+        # If not a member, proceed to add the user
         insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES (%s, %s)'
         params = (self.group_id, user_id)
         self.connector.execute(insert_member_query, params)
-        self._members.append(user_id)
+        user = User.get_user(user_id, self.connector)
+        self._members.append(user)
 
     def add_members(self, user_ids: List[str]):
         # verify whether user_ids exist in the database
@@ -293,26 +301,31 @@ class Group:
         check_members_query = f'SELECT user_id FROM GroupMembers WHERE user_id IN ({placeholders}) AND group_id = %s'
         params = tuple(user_ids) + (self.group_id,)
         existing_members = self.connector.execute(check_members_query, params)
-    
+
         existing_member_ids = {member['user_id'] for member in existing_members}
         new_member_ids = [user_id for user_id in user_ids if user_id not in existing_member_ids]
-    
+
         if not new_member_ids:
             raise ValueError("All provided users are already members of this group")
 
         # Proceed to add only new members
-        insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES ' + ','.join(['(%s, %s)'] * len(user_ids))
+        insert_member_query = 'INSERT INTO GroupMembers (group_id, user_id) VALUES ' + ','.join(
+            ['(%s, %s)'] * len(user_ids))
         params = []
+        user = []
         for user_id in user_ids:
+            user.append(User.get_user(user_id, self.connector))
             params.extend((self.group_id, user_id))
         self.connector.execute(insert_member_query, tuple(params))
-        self._members.extend(user_ids)
+        self._members.extend(user)
 
     def remove_member(self, user_id: str):
         delete_member_query = 'DELETE FROM GroupMembers WHERE group_id = %s AND user_id = %s'
         params = (self.group_id, user_id)
         self.connector.execute(delete_member_query, params)
-        self._members.remove(user_id)
+
+        # Remove the user from self.members based on user_id
+        self._members = [member for member in self._members if member.user_id != user_id]
 
     def remove_members(self, user_ids: List[str]):
         # verify whether user_ids exist in the database
@@ -334,7 +347,6 @@ class Group:
 
         # Proceed with deletion if there are users to remove
         if users_to_remove:
-
             # Constructing the placeholders for the SQL query
             placeholders = ', '.join(['%s'] * len(users_to_remove))
             delete_query = f"DELETE FROM GroupMembers WHERE group_id = %s AND user_id IN ({placeholders})"
@@ -346,3 +358,24 @@ class Group:
             self.members = [member for member in self.members if member.user_id not in users_to_remove]
 
         print(f"Removed {len(users_to_remove)} members from the group.")
+
+    @staticmethod
+    def get_group_by_admin_id(admin_id: str, connector: Connector) -> List['Group']:
+        """
+        Retrieves all groups where the specified user is the admin.
+        :param admin_id: The user ID of the admin
+        :param connector: The database connector object
+        :return: A list of Group objects administered by the specified user
+        """
+        select_groups_query = 'SELECT group_id FROM GroupDetails WHERE admin_id = %s'
+        group_data = connector.execute(select_groups_query, (admin_id,), fetchall = True)
+        if not group_data:
+            return []
+        groups = []
+        for group in group_data:
+            try:
+                group_obj = Group.get_group(group['group_id'], connector)
+                groups.append(group_obj)
+            except ValueError as e:
+                print(f"Error retrieving group {group['group_id']}: {str(e)}")
+        return groups

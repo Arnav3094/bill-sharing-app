@@ -1,4 +1,5 @@
 import json
+
 import mysql.connector
 
 
@@ -97,7 +98,7 @@ class Connector:
     def cursor(self, value):
         self._cursor = value
 
-    def get_config(self, include_database=True):
+    def get_config(self, include_database = True):
         config = {
             "user": self.user,
             "password": self.password,
@@ -110,7 +111,7 @@ class Connector:
 
     def get_initial_connection(self):
         try:
-            db = mysql.connector.connect(**self.get_config(include_database=False))
+            db = mysql.connector.connect(**self.get_config(include_database = False))
             print("LOG: Initial database connection established")
             return db
         except mysql.connector.Error as err:
@@ -145,7 +146,7 @@ class Connector:
         query_type = "DML" if query.strip().split()[0].upper() in ("INSERT", "UPDATE", "DELETE") else "OTHER"
         try:
             self.cursor.execute(query, params) if params else self.cursor.execute(query)
-            print("LOG: Query executed successfully.")
+            # print("LOG: Query executed successfully.")
             if query_type == "DML":
                 self.commit() if auto_commit else None
             else:
@@ -167,7 +168,7 @@ class Connector:
             raise Exception("ERROR: Database connection is closed")
         try:
             self.db.commit()
-            print("LOG: Transaction committed successfully.")
+            # print("LOG: Transaction committed successfully.")
         except mysql.connector.Error as err:
             raise Exception(f"COMMIT ERROR: {err}")
 

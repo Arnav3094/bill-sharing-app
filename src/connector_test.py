@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from src.connector import Connector
+from connector import Connector
 
 
 class ConnectorTests(unittest.TestCase):
