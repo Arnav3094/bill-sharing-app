@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import uuid4
 from typing import List, Dict
 
+
 class Expense:
     def __init__(self, amount: float = None, payer: User = None, group: Group = None,
                  participants: Dict[User, float] = None, expense_id: str = None,
@@ -32,53 +33,40 @@ class Expense:
         """
         self._connector = connector if connector else Connector(password = password, filepath = filepath, user = user,
                                                                 host = host, port = port, database = database)
-        if expense_id:
-            check_expense_id_query = "SELECT expense_id FROM Expenses where expense_id = %s"
-            expense_exists = self._connector.execute(check_expense_id_query, params = (expense_id,))
-            if expense_exists:
-                expense_details_query = "SELECT * FROM Expenses where expense_id = %s"
-                expense_details = self._connector.execute(expense_details_query, params = (expense_id,))
-                if expense_details:  # Check if expense_details is not empty
-                    expense_data = expense_details[0]  # Get the first (and only) row
-                    self._expense_id = expense_id
-                    self._amount = expense_data['amount']
-                    self._payer = User.get_user(expense_data['paid_by'], self._connector)
-                    self._group = Group.get_group(expense_data['group_id'], self._connector)
-                    self._tag = expense_data['tag']
-                    self._description = expense_data['description']
-                    self._timestamp = expense_data['timestamp']
-                    get_participant_ids_query = "SELECT user_id, amount FROM ExpenseParticipants WHERE expense_id = %s"
-                    participant_data = self._connector.execute(get_participant_ids_query, params=(expense_id,))
-                    self._participants = {}
-                    for data in participant_data:
-                        user_id = data.get('user_id')
-                        if user_id:
-                            user = User.get_user(user_id, self._connector)
-                            self._participants[user] = data['amount']
-                else:
-                    raise ValueError(f"No expense found with id {expense_id}")
+        check_expense_id_query = "SELECT expense_id FROM Expenses where expense_id = %s"
+        expense_exists = self._connector.execute(check_expense_id_query, params = (expense_id,))
+        if expense_exists:
+            expense_details_query = "SELECT * FROM Expenses where expense_id = %s"
+            expense_details = self._connector.execute(expense_details_query, params = (expense_id,))
+            self._expense_id = expense_id
+            self._amount = expense_details[0]['amount']
+            self._payer = User.get_user(expense_details[0]['paid_by'], self._connector)
+            self._group = Group.get_group(expense_details[0]['group_id'], self._connector)
+            self._tag = expense_details[0]['tag']
+            self._description = expense_details[0]['description']
+            self._timestamp = expense_details[0]['timestamp']
+            get_participant_ids_query = "SELECT user_id FROM ExpenseParticipants WHERE expense_id = %s"
+            participant_ids = self._connector.execute(get_participant_ids_query, params = (expense_id,))
+            self._participants = User.get_users(participant_ids, self._connector)
 
-                if amount and self._amount != amount:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Amount provided does not match the amount in the database for expense_id {expense_id}")
-                if payer and self._payer != payer:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Payer provided does not match the payer in the database for expense_id {expense_id}")
-                if group and self._group != group:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Group provided does not match the group in the database for expense_id {expense_id}")
-                if tag and self._tag != tag:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Tag provided does not match the tag in the database for expense_id {expense_id}")
-                if description and self._description != description:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Description provided does not match the description in the database for expense_id {expense_id}")
-                if participants and self._participants != participants:
-                    raise ValueError(
-                        f"ERROR[Expense.__init__]: Participants provided do not match the participants in the database for expense_id {expense_id}")
-            else:
-                raise ValueError(f"No expense found with id {expense_id}")
-        
+            if amount and self._amount != amount:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Amount provided does not match the amount in the database for expense_id {expense_id}")
+            if payer and self._payer != payer:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Payer provided does not match the payer in the database for expense_id {expense_id}")
+            if group and self._group != group:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Group provided does not match the group in the database for expense_id {expense_id}")
+            if tag and self._tag != tag:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Tag provided does not match the tag in the database for expense_id {expense_id}")
+            if description and self._description != description:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Description provided does not match the description in the database for expense_id {expense_id}")
+            if participants and self._participants != participants:
+                raise ValueError(
+                    f"ERROR[Expense.__init__]: Participants provided do not match the participants in the database for expense_id {expense_id}")
 
         else:
             if not amount:
@@ -329,38 +317,26 @@ class Expense:
         return Expense(expense_id=expense_id, connector=connector)
 
     @staticmethod
-    def get_expenses(expense_ids: List[str], connector: Connector) -> List['Expense']:
-        expenses = []
-        for expense_id in expense_ids:
-            print(f"Fetching data for expense_id: {expense_id}")  # Debug statement
-            expense_data = connector.execute("SELECT * FROM Expenses WHERE expense_id = %s", params=(expense_id,))
-            print(f"Expense data retrieved: {expense_data}")  # Debug statement
-            if expense_data:
-                expense_data = expense_data[0]  # Assuming each expense_id is unique and fetches only one row
-                participants_data = connector.execute("SELECT user_id, amount FROM ExpenseParticipants WHERE expense_id = %s", params=(expense_id,))
-                print(f"Participants data retrieved: {participants_data}")  # Debug statement
-                participants = {User.get_user(participant['user_id'], connector): participant['amount'] for participant in participants_data}
-                expense = Expense(
-                    expense_id=expense_data['expense_id'],
-                    amount=expense_data['amount'],
-                    payer=User.get_user(expense_data['paid_by'], connector),
-                    group=Group.get_group(expense_data['group_id'], connector),
-                    participants=participants,
-                    description=expense_data['description'],
-                    tag=expense_data['tag'],
-                    connector=connector
-                )
-                expenses.append(expense)
-        return expenses
-
+    def get_expenses(expense_ids: List[str], connector: Connector):
+        """
+        Retrieves multiple expenses from the database and returns a list of Expense objects by handing the expense ids to the constructor
+        :param connector: The database connector.
+        :param expense_ids: The IDs of the expenses.
+        :return: List of Expense objects
+        """
+        expenses_exist_query = "SELECT expense_id FROM Expenses WHERE expense_id IN %s"
+        expenses_exist = connector.execute(expenses_exist_query, (tuple(expense_ids),))
+        if len(expenses_exist) != len(expense_ids):
+            raise ValueError("One or more expense IDs not found.")
+        return [Expense(expense_id=expense_id, connector=connector) for expense_id in expense_ids]
 
     @staticmethod
     def get_group_expenses(group_id: str, connector: Connector):
         query = "SELECT * FROM Expenses WHERE group_id = %s"
         expenses = connector.execute(query, (group_id,))
         return [Expense(expense_id=expense['expense_id'], connector=connector) for expense in expenses]
-    
-    
+
+
     def calculate_and_split_expense(self, method: str, participants: List[User], amounts: List[float] = None, percentages: List[float] = None):
         """
         Calculates how to split the expense based on the specified method and calls split_expense.
@@ -390,7 +366,7 @@ class Expense:
             raise ValueError("Error[Expense.calculate & split_expense] : Invalid method specified. Use 'equal', 'unequal', or 'percentages'.")
 
         self.split_expense(split_amount, split_dict)
-        
+
 
     def split_expense(self, split_amount: float, participants: Dict[User, float]):
         """
