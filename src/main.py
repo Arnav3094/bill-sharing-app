@@ -17,7 +17,7 @@ class BillSharingApp:
         "database": "bill_sharing_app"
     }
  
-    # Create a Connector object
+    
     
         self.connector = Connector(**db_params)
         self.current_user = None
@@ -72,8 +72,8 @@ class BillSharingApp:
         print("3. Manage a group")
         print("4. Manage expenses")
         print("5. Manage transactions")
-        print("6. View dues")
-        print("7. View group dues")  # New option
+        print("6. View my dues")
+        print("7. View group dues")  
         print("8. Logout")
         choice = input("Enter your choice: ")
 
@@ -281,8 +281,8 @@ class BillSharingApp:
                     print("Choose split method:")
                     print("1. Equal")
                     print("2. Unequal")
-                    print("3. Percentages")
-                    split_method = input("Enter your choice (1/2/3): ")
+                    #print("3. Percentages")
+                    split_method = input("Enter your choice (1/2): ")
                     
                     participants = list(expense.participants.keys())
                     
@@ -294,6 +294,7 @@ class BillSharingApp:
                                 choice = ch.lower()
                                 if choice == 'y':
                                     participant_new.append(member)
+                                
                             
                         expense.calculate_and_split_expense('equal', participant_new)
                     elif split_method == '2':
@@ -326,18 +327,25 @@ class BillSharingApp:
                     self.connector.execute(update_query, (expense.expense_id, expense.payer.user_id))
                     update_query = "UPDATE ExpenseParticipants SET amount = %s WHERE expense_id = %s AND user_id = %s"
                     self.connector.execute(update_query, (new_amount,expense.expense_id, expense.payer.user_id))
+                    
 
                     #marking the person not included(0 share) in expense as settled
                     for member in expense.participants:
                         if expense.participants[member] == 0.0 :
                             update_query = "UPDATE ExpenseParticipants SET settled = 'SETTLED' WHERE expense_id = %s AND user_id = %s"
                             self.connector.execute(update_query, (expense.expense_id, member.user_id))
+                    print(expense.participants)
 
 
                     print("Expense split successfully.")
                     print(f"\nSplit details for expense '{expense.description}':")
                     print(f"Total amount: {expense.amount:.2f}")
-                    print(f"Payer: {expense.payer.name} (Settled)")
+                    print(f"Payer: {expense.payer.name}")
+                    print("\nSplit:")
+                    for participant, amount in expense.participants.items():
+                        print(f"{participant.name}: {amount:.2f}")
+                    """ print(f"Total amount: {expense.amount:.2f}")
+                    print(f"Payer: {expense.payer.name} (Settled)") """
                 else:
                     print("Can't split expense. You are not the payer")
                 
@@ -366,10 +374,10 @@ class BillSharingApp:
                 participants = {}
                 for user in expense.participants:
                     if user.user_id == expense.payer.user_id:
-                        amount_owed = float(input(f"Enter new amount owed by you (press enter to keep current): ") or expense.participants[user])
+                        amount_owed = float(input(f"Enter new amount owed by you: ") or expense.participants[user])
                         participants[user] = amount_owed
                     else:
-                        amount_owed = float(input(f"Enter new amount owed by {user.name} (press enter to keep current): ") or expense.participants[user])
+                        amount_owed = float(input(f"Enter new amount owed by {user.name}: ") or expense.participants[user])
                         participants[user] = amount_owed
 
 
