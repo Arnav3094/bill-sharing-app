@@ -165,3 +165,12 @@ class User:
         result = self.connector.execute(select_query, params = (self.user_id,))
         group_ids = [row['group_id'] for row in result]
         return group_ids
+    
+    @staticmethod
+    def get_user_by_email(email: str, connector: Connector):
+        query = "SELECT * FROM Users WHERE email = %s"
+        user_data = connector.execute(query, params=(email,), fetchall=False)
+        if not user_data:
+            raise ValueError(f"User with email: {email} does not exist in the database.")
+        return User(user_id=user_data['user_id'], name=user_data['name'], email=user_data['email'],
+                    created=user_data['created'], connector=connector)
