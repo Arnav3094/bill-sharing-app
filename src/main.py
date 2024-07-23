@@ -1,4 +1,5 @@
 import sys
+import json
 from user import User
 from group import Group
 from expense import Expense
@@ -9,15 +10,20 @@ from datetime import datetime
 class BillSharingApp:
     def __init__(self):
         db_params = {
-        "password": "rootdatabase24",
+        "password": "", # Enter your MySQL password here
         "filepath": "",
         "user": "root",
         "host": "localhost",
         "port": "3306",
         "database": "bill_sharing_app"
     }
- 
-    
+        
+        # Load database connection parameters from a JSON file named db.json
+        #Save the file in the same directory as main.py(here in src folder)
+        #The file should contain the following keys: host, port, user, password, database
+        #Write /src/db.json in the info/exclude section of .gitignore folder
+        with open('src/db.json', 'r') as f:
+            db_params = json.load(f)            
     
         self.connector = Connector(**db_params)
         self.current_user = None
